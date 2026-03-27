@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Download, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,25 +20,43 @@ const ToolPage = ({ title, description, placeholder, icon, gradient, acceptFile,
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  const [downloadUrl, setDownloadUrl] = useState("");
+  
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!acceptFile && !url.trim()) return;
-    if (acceptFile && !file) return;
+  if (!acceptFile && !url.trim()) return;
+  // if (acceptFile && !file) return;
+  if (!acceptFile && !url.startsWith("http")) {
+  setStatus("error");
+  setErrorMsg("Please enter a valid URL");
+  return;
+  }
 
-    setStatus("loading");
-    setErrorMsg("");
+  setStatus("loading");
+  setErrorMsg("");
 
-    // Simulate processing
-    setTimeout(() => {
-      if (!acceptFile && !url.startsWith("http")) {
-        setStatus("error");
-        setErrorMsg("Please enter a valid URL starting with http:// or https://");
-        return;
-      }
+  try {
+    // Build request URL
+    const apiUrl = `https://downloadhubworker.karanvirsidhu03.workers.dev?url=${encodeURIComponent(url)}`;
+
+    const res = await fetch(apiUrl);
+    const data = await res.json();
+  
+    if (data.success && data.downloadUrl) {
+      // Open download in new tab
+      // window.open(data.downloadUrl, "_blank");
+      setDownloadUrl(data.downloadUrl);
       setStatus("success");
-    }, 2000);
-  };
+    } else {
+      setStatus("error");
+      setErrorMsg(data.error || "Failed to fetch download link");
+    }
+  } catch (err) {
+    setStatus("error");
+    setErrorMsg("Network error. Please try again.");
+  }
+};
 
   return (
     <div className="min-h-[80vh]">
@@ -134,7 +152,7 @@ const ToolPage = ({ title, description, placeholder, icon, gradient, acceptFile,
                   <CheckCircle2 className="h-5 w-5" />
                   <span className="font-medium">Ready to download!</span>
                 </div>
-                <Button className="bg-card text-foreground hover:bg-card/90 font-semibold">
+                <Button onClick={() => window.open(downloadUrl, "_blank")} className="bg-card text-foreground hover:bg-card/90 font-semibold" >
                   <Download className="mr-2 h-4 w-4" /> Download Now
                 </Button>
               </motion.div>
