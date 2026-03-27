@@ -21,6 +21,7 @@ const ToolPage = ({ title, description, placeholder, icon, gradient, acceptFile,
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [downloadUrl, setDownloadUrl] = useState("");
+  const [thumbnail, setThumbnail] = useState("");
   
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
@@ -47,6 +48,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       // Open download in new tab
       // window.open(data.downloadUrl, "_blank");
       setDownloadUrl(data.downloadUrl);
+      setThumbnail(data.thumbnail); 
       setStatus("success");
     } else {
       setStatus("error");
@@ -148,6 +150,16 @@ const handleSubmit = async (e: React.FormEvent) => {
                 animate={{ opacity: 1, y: 0 }}
                 className="mt-6 bg-card/20 backdrop-blur-sm rounded-xl p-6 border border-primary-foreground/10"
               >
+                <div className="flex flex-col items-center gap-4">
+                    {/* ✅ PREVIEW IMAGE */}
+                    {thumbnail && (
+                      <img
+                        src={thumbnail}
+                        alt="Preview"
+                        className="w-full max-w-sm rounded-lg"
+                      />
+                    )}
+
                 <div className="flex items-center justify-center gap-2 text-green-200 mb-4">
                   <CheckCircle2 className="h-5 w-5" />
                   <span className="font-medium">Ready to download!</span>
