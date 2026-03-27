@@ -27,35 +27,36 @@ const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
   if (!acceptFile && !url.trim()) return;
-  // if (acceptFile && !file) return;
   if (!acceptFile && !url.startsWith("http")) {
-  setStatus("error");
-  setErrorMsg("Please enter a valid URL");
-  
-  return;
+    setStatus("error");
+    setErrorMsg("Please enter a valid URL");
+    return;
   }
 
   setStatus("loading");
   setErrorMsg("");
 
   try {
-    // Build request URL
-    const apiUrl = `https://downloadhubworker.karanvirsidhu03.workers.dev?url=${encodeURIComponent(url)}`;
+    // FIX 1: Sanitize URL (Strips tracking params like ?si= for YouTube/TikTok)
+    const cleanUrl = url.split('?')[0].trim();
 
+    // Build request URL
+    const apiUrl = `https://downloadhubworker.karanvirsidhu03.workers.dev?url=${encodeURIComponent(cleanUrl)}`;
     const res = await fetch(apiUrl);
     const data = await res.json();
-    
-  
+
     if (data.success && data.downloadUrl) {
-      // Open download in new tab
-      // window.open(data.downloadUrl, "_blank");
       setDownloadUrl(data.downloadUrl);
-      setThumbnail(data.thumbnail); 
-      setStatus("success");
-      const workerBase = "https://downloadhubworker.karanvirsidhu03.workers.dev";
-      const proxiedThumbnail = `${workerBase}/proxy-image?img=${encodeURIComponent(data.thumbnail)}`;
       
-      setThumbnail(proxiedThumbnail); // Use the proxied version
+      // FIX 2: Only set the thumbnail ONCE using the proxy
+      if (data.thumbnail) {
+        const workerBase = "https://downloadhubworker.karanvirsidhu03.workers.dev";
+        const proxiedThumbnail = `${workerBase}/proxy-image?img=${encodeURIComponent(data.thumbnail)}`;
+        setThumbnail(proxiedThumbnail);
+      } else {
+        setThumbnail(""); 
+      }
+      
       setStatus("success");
     } else {
       setStatus("error");
