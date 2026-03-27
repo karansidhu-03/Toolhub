@@ -51,7 +51,11 @@ const handleSubmit = async (e: React.FormEvent) => {
       // window.open(data.downloadUrl, "_blank");
       setDownloadUrl(data.downloadUrl);
       setThumbnail(data.thumbnail); 
-      console.log("Thumbnail set:", data.thumbnail);
+      setStatus("success");
+      const workerBase = "https://downloadhubworker.karanvirsidhu03.workers.dev";
+      const proxiedThumbnail = `${workerBase}/proxy-image?img=${encodeURIComponent(data.thumbnail)}`;
+      
+      setThumbnail(proxiedThumbnail); // Use the proxied version
       setStatus("success");
     } else {
       setStatus("error");
