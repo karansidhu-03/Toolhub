@@ -31,6 +31,7 @@ const handleSubmit = async (e: React.FormEvent) => {
   if (!acceptFile && !url.startsWith("http")) {
   setStatus("error");
   setErrorMsg("Please enter a valid URL");
+  console.log("API DATA:", data);
   return;
   }
 
@@ -49,6 +50,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       // window.open(data.downloadUrl, "_blank");
       setDownloadUrl(data.downloadUrl);
       setThumbnail(data.thumbnail); 
+      console.log("Thumbnail set:", data.thumbnail);
       setStatus("success");
     } else {
       setStatus("error");
@@ -152,12 +154,14 @@ const handleSubmit = async (e: React.FormEvent) => {
               >
                 <div className="flex flex-col items-center gap-4">
                     {/* ✅ PREVIEW IMAGE */}
+                  <p>
                     {thumbnail && (
                       <img
                         src={thumbnail}
                         alt="Preview"
                         className="w-full max-w-sm rounded-lg"
                       />
+                    </p>
                     )}
 
                 <div className="flex items-center justify-center gap-2 text-green-200 mb-4">
