@@ -31,7 +31,7 @@ const handleSubmit = async (e: React.FormEvent) => {
   if (!acceptFile && !url.startsWith("http")) {
   setStatus("error");
   setErrorMsg("Please enter a valid URL");
-  console.log("API DATA:", data);
+  
   return;
   }
 
@@ -44,6 +44,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
     const res = await fetch(apiUrl);
     const data = await res.json();
+    
   
     if (data.success && data.downloadUrl) {
       // Open download in new tab
