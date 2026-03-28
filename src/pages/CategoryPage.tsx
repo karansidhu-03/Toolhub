@@ -9,17 +9,16 @@ const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } };
 
 const CategoryPage = () => {
   const { slug } = useParams<{ slug: string }>();
-
   const entry = Object.entries(categories).find(([, cat]) => cat.slug === slug);
-  if (!entry) return <Navigate to="/" replace />;
-
-  const [key, category] = entry as [ToolCategory, typeof categories[ToolCategory]];
-  const categoryTools = getToolsByCategory(key);
-  const Icon = category.icon;
+  const [key, category] = (entry || []) as [ToolCategory, typeof categories[ToolCategory]];
+  const categoryTools = entry ? getToolsByCategory(key) : [];
+  const Icon = category?.icon;
 
   useEffect(() => {
-    document.title = `${category.label} — Free Online Tools | ToolHub`;
+    if (category) document.title = `${category.label} — Free Online Tools | ToolHub`;
   }, [category]);
+
+  if (!entry) return <Navigate to="/" replace />;
 
   return (
     <div className="min-h-[80vh]">
