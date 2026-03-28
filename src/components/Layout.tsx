@@ -11,7 +11,6 @@ const navCategories: { key: ToolCategory; label: string }[] = [
   { key: "pdf", label: "PDF Tools" },
   { key: "image", label: "Image Tools" },
   { key: "video", label: "Video Tools" },
-  { key: "downloader", label: "Downloaders" },
 ];
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
