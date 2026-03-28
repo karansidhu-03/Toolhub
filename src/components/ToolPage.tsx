@@ -174,6 +174,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                         ) : (
                           <p>No preview available</p>
                       )}
+                    
                   <div className="flex items-center justify-center gap-2 text-green-200 mb-4">
                     <CheckCircle2 className="h-5 w-5" />
                     <span className="font-medium">Ready to download!</span>
@@ -212,6 +213,18 @@ const handleSubmit = async (e: React.FormEvent) => {
                   >
                     <Download className="mr-2 h-4 w-4" /> Download Now
                   </Button>
+                            {downloadUrl && (
+          <div className="result-container">
+            <img src={thumbnail} alt="Thumbnail" />
+            
+            {/* ADSTERRA NATIVE BANNER HERE */}
+            <div id="container-28903439">
+               {/* Paste the specific <div> and <script> Adsterra gave you for Native Banner */}
+            </div>
+        
+            <Button onClick={handleDownload}>Download Now</Button>
+          </div>
+        )}
                   </div>
                 </motion.div>
             )}
