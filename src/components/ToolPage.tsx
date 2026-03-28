@@ -181,23 +181,29 @@ const handleSubmit = async (e: React.FormEvent) => {
                   <Button 
                     onClick={async () => {
                       try {
-                        setStatus("loading"); // Optional: show a spinner while the browser prepares the file
+                        setStatus("loading");
+                        // This fetches the video data into the browser's memory
                         const response = await fetch(downloadUrl);
+                        
+                        if (!response.ok) throw new Error("Download failed");
+                  
                         const blob = await response.blob();
                         const blobUrl = window.URL.createObjectURL(blob);
                         
+                        // Create a hidden link to trigger the 'Save As' dialog
                         const link = document.createElement('a');
                         link.href = blobUrl;
-                        link.download = `video_${Date.now()}.mp4`; // Forces the "Save As" dialog
+                        link.download = `video_${Date.now()}.mp4`; 
                         document.body.appendChild(link);
                         link.click();
+                        
+                        // Cleanup
                         document.body.removeChild(link);
                         window.URL.revokeObjectURL(blobUrl);
-                        
                         setStatus("success");
                       } catch (err) {
-                        console.error("Download failed", err);
-                        // Fallback: If Blob fetch is blocked by CORS, try opening in new tab
+                        console.error(err);
+                        // Fallback: If Blob is blocked, try opening in a new tab as a last resort
                         window.open(downloadUrl, "_blank");
                         setStatus("success");
                       }
