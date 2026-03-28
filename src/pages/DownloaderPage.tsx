@@ -134,8 +134,20 @@ const DownloaderPage = () => {
   return (
     <div className="min-h-[80vh]">
       {/* Hero */}
-      <section className="relative overflow-hidden py-16 md:py-24 bg-gradient-to-br from-cyan-500 via-teal-500 to-emerald-500">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.12),transparent_50%)]" />
+      <section className="relative overflow-hidden py-16 md:py-24 bg-[#1a0533]">
+        {/* Multi-layer gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#833ab4] via-[#c13584] to-[#e1306c] opacity-80" />
+        <div className="absolute inset-0 bg-gradient-to-tr from-[#00f2ea]/30 via-transparent to-[#ff0050]/20" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#1a0533]/60" />
+
+        {/* Glowing orbs */}
+        <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-[#833ab4]/40 blur-[120px] animate-[pulse_8s_ease-in-out_infinite]" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-[#00f2ea]/30 blur-[120px] animate-[pulse_10s_ease-in-out_infinite_1s]" />
+        <div className="absolute top-[30%] right-[20%] w-[300px] h-[300px] rounded-full bg-[#ff0000]/15 blur-[100px] animate-[pulse_12s_ease-in-out_infinite_2s]" />
+        <div className="absolute bottom-[20%] left-[15%] w-[250px] h-[250px] rounded-full bg-[#e1306c]/25 blur-[90px] animate-[pulse_9s_ease-in-out_infinite_0.5s]" />
+
+        {/* Subtle dark overlay for text readability */}
+        <div className="absolute inset-0 bg-black/15" />
         <div className="container mx-auto px-4 relative z-10">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl mx-auto text-center">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-card/20 backdrop-blur-sm mb-6">
