@@ -1,4 +1,4 @@
-import { FileText, Image, FileVideo, Download, Scissors, Merge, SplitSquareHorizontal, FileOutput, Minimize2, Maximize2, RefreshCw, Instagram, Video, Youtube } from "lucide-react";
+import { FileText, Image, FileVideo, Download, Scissors, Merge, SplitSquareHorizontal, FileOutput, Minimize2, Maximize2, RefreshCw } from "lucide-react";
 
 export interface Tool {
   slug: string;
