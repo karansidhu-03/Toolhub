@@ -111,6 +111,15 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             ))}
 
             <Link
+              to="/downloader"
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                location.pathname === "/downloader" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              }`}
+            >
+              Downloader
+            </Link>
+
+            <Link
               to="/blog"
               className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 location.pathname === "/blog" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"
