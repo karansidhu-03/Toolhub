@@ -181,30 +181,32 @@ const handleSubmit = async (e: React.FormEvent) => {
       </div>
 
       {/* 4. The Money Button */}
-      <Button 
-        onClick={async () => {
-          // Adsterra Smartlink
-          window.open("https://www.profitablecpmratenetwork.com/c5fv366ys?key=9500a49c2e1e39d9dcc78e03078013ba", "_blank");
-          
-          // Download Logic
-          try {
-            const response = await fetch(downloadUrl);
-            const blob = await response.blob();
-            const blobUrl = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = blobUrl;
-            link.download = `video_${Date.now()}.mp4`; 
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-          } catch (err) {
-            window.open(downloadUrl, "_blank");
-          }
-        }} 
-        className="w-full max-w-sm h-14 bg-card text-foreground hover:bg-card/90 font-bold text-lg"
-      >
-        <Download className="mr-2 h-5 w-5" /> Download Now
-      </Button>
+     <Button 
+  onClick={() => {
+    // 1. OPEN THE SMARTLINK (THE PROFIT)
+    // This opens your ad in a new tab immediately
+    window.open("https://www.profitablecpmratenetwork.com/c5fv366ys?key=9500a49c2e1e39d9dcc78e03078013ba", "_blank");
+
+    // 2. TRIGGER THE DOWNLOAD (THE SERVICE)
+    // We use a small timeout (100ms) to ensure the browser registers the window.open first
+    setTimeout(() => {
+      if (downloadUrl) {
+        // Option A: Direct Download via a hidden link
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        // This 'target="_self"' ensures it stays in the current tab
+        link.target = "_self"; 
+        link.setAttribute('download', 'video.mp4');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    }, 100);
+  }} 
+  className="w-full max-w-sm h-14 bg-card text-foreground hover:bg-card/90 font-bold text-lg shadow-lg"
+>
+  <Download className="mr-2 h-5 w-5" /> Download Now
+</Button>
     </div>
   </motion.div>
 )}
