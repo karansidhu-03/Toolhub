@@ -5,11 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Layout from "./components/Layout";
 import Index from "./pages/Index";
-import InstagramDownloader from "./pages/InstagramDownloader";
-import TikTokDownloader from "./pages/TikTokDownloader";
-import YouTubeShortsDownloader from "./pages/YouTubeShortsDownloader";
-import ImageCompressor from "./pages/ImageCompressor";
-import VideoConverter from "./pages/VideoConverter";
+import CategoryPage from "./pages/CategoryPage";
+import ToolPageWrapper from "./pages/ToolPageWrapper";
 import Blog from "./pages/Blog";
 import NotFound from "./pages/NotFound";
 
@@ -24,12 +21,8 @@ const App = () => (
         <Layout>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/instagram-downloader" element={<InstagramDownloader />} />
-            <Route path="/tiktok-downloader" element={<TikTokDownloader />} />
-            <Route path="/youtube-shorts-downloader" element={<YouTubeShortsDownloader />} />
-            <Route path="/image-compressor" element={<ImageCompressor />} />
-            <Route path="/video-converter" element={<VideoConverter />} />
             <Route path="/blog" element={<Blog />} />
+            <Route path="/:categorySlug" element={<CategoryPageOrTool />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Layout>
@@ -37,5 +30,30 @@ const App = () => (
     </TooltipProvider>
   </QueryClientProvider>
 );
+
+// Smart router: check if slug matches a category or a tool
+import { categories } from "@/lib/tools";
+import { useParams, Navigate } from "react-router-dom";
+
+const categorySlugs = Object.values(categories).map((c) => c.slug);
+
+const CategoryPageOrTool = () => {
+  const { categorySlug } = useParams<{ categorySlug: string }>();
+  if (!categorySlug) return <Navigate to="/" replace />;
+  if (categorySlugs.includes(categorySlug)) return <CategoryPage />;
+  // Treat as tool slug
+  return <ToolPageWrapper />;
+};
+
+// Re-import for the wrapper to use toolSlug param correctly
+import { getToolBySlug } from "@/lib/tools";
+
+// Override ToolPageWrapper to use categorySlug param since we're using a single route param
+const ToolPageWrapperInner = () => {
+  const { categorySlug } = useParams<{ categorySlug: string }>();
+  const tool = categorySlug ? getToolBySlug(categorySlug) : undefined;
+  if (!tool) return <NotFound />;
+  return <ToolPageWrapper />;
+};
 
 export default App;

@@ -1,9 +1,14 @@
 import { useEffect, useRef } from "react";
-const AdBanner = () => {
+import { cn } from "@/lib/utils";
+
+interface AdBannerProps {
+  className?: string;
+}
+
+const AdBanner = ({ className }: AdBannerProps) => {
   const adRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // This check prevents the script from running twice in React Strict Mode
     if (adRef.current && !adRef.current.firstChild) {
       const scriptConfig = document.createElement("script");
       scriptConfig.type = "text/javascript";
@@ -27,7 +32,7 @@ const AdBanner = () => {
   }, []);
 
   return (
-    <div className="flex justify-center my-6 overflow-hidden min-h-[60px]">
+    <div className={cn("flex justify-center my-4 overflow-hidden min-h-[60px]", className)}>
       <div ref={adRef}></div>
     </div>
   );
