@@ -74,6 +74,11 @@ const handleSubmit = async (e: React.FormEvent) => {
       <section className={`relative overflow-hidden py-16 md:py-24 ${gradient}`}>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.1),transparent_50%)]" />
         <div className="container mx-auto px-4 relative z-10">
+          <div className="container mx-auto px-4 relative z-10">
+  {/* Add this line here */}
+  <div className="flex justify-center mb-8">
+    <AdBanner />
+  </div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -153,74 +158,56 @@ const handleSubmit = async (e: React.FormEvent) => {
               </motion.div>
             )}
             {status === "success" && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-6 bg-card/20 backdrop-blur-sm rounded-xl p-6 border border-primary-foreground/10"
-                >
-                  <div className="flex flex-col items-center gap-4">
-                      {thumbnail ? (
-                          <img
-                            src={thumbnail}
-                            alt="Preview"
-                            className="w-full max-w-sm rounded-lg"
-                            referrerPolicy="no-referrer"
-                            crossOrigin="anonymous"
-                            onError={(e) => {
-                              console.error("Image failed to load even with proxy");
-                              // Optional: set a fallback image here
-                            }}
-                          />
-                        ) : (
-                          <p>No preview available</p>
-                      )}
-                    
-                  <div className="flex items-center justify-center gap-2 text-green-200 mb-4">
-                    <CheckCircle2 className="h-5 w-5" />
-                    <span className="font-medium">Ready to download!</span>
-                  </div>
-                    <div id="container-747dda126a3b07b380294c855fbd4805" className="w-full max-w-sm my-2 min-h-[50px]">
-         <script async="async" data-cfasync="false" src="https://pl29003937.profitablecpmratenetwork.com/747dda126a3b07b380294c855fbd4805/invoke.js"></script>
+  <motion.div
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="mt-6 bg-card/20 backdrop-blur-sm rounded-xl p-6 border border-primary-foreground/10"
+  >
+    <div className="flex flex-col items-center gap-4">
+      {/* 1. Preview */}
+      {thumbnail && (
+        <img src={thumbnail} alt="Preview" className="w-full max-w-sm rounded-lg shadow-lg" />
+      )}
+      
+      {/* 2. Success Message */}
+      <div className="flex items-center justify-center gap-2 text-green-200">
+        <CheckCircle2 className="h-5 w-5" />
+        <span className="font-medium">Ready to download!</span>
       </div>
-                  <Button 
-                    onClick={async () => {
-                      window.open("https://www.profitablecpmratenetwork.com/c5fv366ys?key=9500a49c2e1e39d9dcc78e03078013ba", "_blank");
-                      try {
-                        setStatus("loading");
-                        // This fetches the video data into the browser's memory
-                        const response = await fetch(downloadUrl);
-                        
-                        if (!response.ok) throw new Error("Download failed");
-                  
-                        const blob = await response.blob();
-                        const blobUrl = window.URL.createObjectURL(blob);
-                        
-                        // Create a hidden link to trigger the 'Save As' dialog
-                        const link = document.createElement('a');
-                        link.href = blobUrl;
-                        link.download = `video_${Date.now()}.mp4`; 
-                        document.body.appendChild(link);
-                        link.click();
-                        
-                        // Cleanup
-                        document.body.removeChild(link);
-                        window.URL.revokeObjectURL(blobUrl);
-                        setStatus("success");
-                      } catch (err) {
-                        console.error(err);
-                        // Fallback: If Blob is blocked, try opening in a new tab as a last resort
-                        window.open(downloadUrl, "_blank");
-                        setStatus("success");
-                      }
-                    }} 
-                    className="bg-card text-foreground hover:bg-card/90 font-semibold"
-                  >
-                    <Download className="mr-2 h-4 w-4" /> Download Now
-                  </Button>
-                           
-                  </div>
-                </motion.div>
-            )}
+
+      {/* 3. The Ad (Critical for Profit) */}
+      <div className="w-full flex justify-center py-2">
+        <AdBanner />
+      </div>
+
+      {/* 4. The Money Button */}
+      <Button 
+        onClick={async () => {
+          // Adsterra Smartlink
+          window.open("https://www.profitablecpmratenetwork.com/c5fv366ys?key=9500a49c2e1e39d9dcc78e03078013ba", "_blank");
+          
+          // Download Logic
+          try {
+            const response = await fetch(downloadUrl);
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = `video_${Date.now()}.mp4`; 
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          } catch (err) {
+            window.open(downloadUrl, "_blank");
+          }
+        }} 
+        className="w-full max-w-sm h-14 bg-card text-foreground hover:bg-card/90 font-bold text-lg"
+      >
+        <Download className="mr-2 h-5 w-5" /> Download Now
+      </Button>
+    </div>
+  </motion.div>
+)}
           </motion.div>
         </div>
       </section>
