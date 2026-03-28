@@ -157,68 +157,63 @@ const handleSubmit = async (e: React.FormEvent) => {
                 <span className="text-sm">{errorMsg}</span>
               </motion.div>
             )}
+
             {status === "success" && (
-  <motion.div
-    initial={{ opacity: 0, y: 10 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="mt-6 bg-card/20 backdrop-blur-sm rounded-xl p-6 border border-primary-foreground/10"
-  >
-    <div className="flex flex-col items-center gap-4">
-      {/* 1. Preview */}
-      {thumbnail && (
-        <img src={thumbnail} alt="Preview" className="w-full max-w-sm rounded-lg shadow-lg" />
-      )}
-      
-      {/* 2. Success Message */}
-      <div className="flex items-center justify-center gap-2 text-green-200">
-        <CheckCircle2 className="h-5 w-5" />
-        <span className="font-medium">Ready to download!</span>
-      </div>
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-6 bg-card/20 backdrop-blur-sm rounded-xl p-6 border border-primary-foreground/10"
+              >
+                <div className="flex flex-col items-center gap-4">
+                  {thumbnail ? (
+                    <img
+                      src={thumbnail}
+                      alt="Preview"
+                      className="w-full max-w-sm rounded-lg shadow-lg"
+                      referrerPolicy="no-referrer"
+                      crossOrigin="anonymous"
+                    />
+                  ) : (
+                    <p>No preview available</p>
+                  )}
 
-      {/* 3. The Ad (Critical for Profit) */}
-      <div className="w-full flex justify-center py-2">
-        <AdBanner />
-      </div>
+                  <div className="flex items-center justify-center gap-2 text-green-200">
+                    <CheckCircle2 className="h-5 w-5" />
+                    <span className="font-medium">Ready to download!</span>
+                  </div>
 
-      {/* 4. The Money Button */}
-     <Button 
-  onClick={() => {
-    // 1. OPEN THE SMARTLINK (THE PROFIT)
-    // This opens your ad in a new tab immediately
-    window.open("https://www.profitablecpmratenetwork.com/c5fv366ys?key=9500a49c2e1e39d9dcc78e03078013ba", "_blank");
+                  {/* Ad Section */}
+                  <div className="w-full flex justify-center py-2">
+                    <AdBanner />
+                  </div>
 
-    // 2. TRIGGER THE DOWNLOAD (THE SERVICE)
-    // We use a small timeout (100ms) to ensure the browser registers the window.open first
-    setTimeout(() => {
-      if (downloadUrl) {
-        // Option A: Direct Download via a hidden link
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        // This 'target="_self"' ensures it stays in the current tab
-        link.target = "_self"; 
-        link.setAttribute('download', 'video.mp4');
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
-    }, 100);
-  }} 
-  className="w-full max-w-sm h-14 bg-card text-foreground hover:bg-card/90 font-bold text-lg shadow-lg"
->
-  <Download className="mr-2 h-5 w-5" /> Download Now
-</Button>
-    </div>
-  </motion.div>
-)}
+                  {/* The Money Button */}
+                  <a
+                    href={downloadUrl}
+                    target="_self"
+                    download={`video_${Date.now()}.mp4`}
+                    onClick={() => {
+                      window.open("https://www.profitablecpmratenetwork.com/c5fv366ys?key=9500a49c2e1e39d9dcc78e03078013ba", "_blank");
+                    }}
+                    className="inline-flex items-center justify-center w-full max-w-sm h-14 bg-card text-foreground hover:bg-card/90 font-bold text-lg rounded-xl shadow-lg no-underline"
+                  >
+                    <Download className="mr-2 h-5 w-5" /> Download Now
+                  </a>
+                </div>
+              </motion.div>
+            )}
           </motion.div>
         </div>
       </section>
 
-      <AdBanner slot="in-content" className="my-6 container mx-auto px-4 rounded-lg" />
+      {/* Middle Banner */}
+      <div className="flex justify-center my-8 container mx-auto px-4">
+        <AdBanner />
+      </div>
 
       {/* How it works */}
       <section className="container mx-auto px-4 py-16">
-        <h2 className="font-display text-2xl font-bold text-center mb-10">How It Works</h2>
+        <h2 className="font-display text-2xl font-bold text-center mb-10 text-foreground">How It Works</h2>
         <div className="grid md:grid-cols-3 gap-8 max-w-3xl mx-auto">
           {[
             { step: "1", title: acceptFile ? "Upload File" : "Paste Link", desc: acceptFile ? "Select your file from your device" : "Copy the URL and paste it above" },
@@ -226,10 +221,10 @@ const handleSubmit = async (e: React.FormEvent) => {
             { step: "3", title: "Download", desc: "Get your file ready to save" },
           ].map((item) => (
             <div key={item.step} className="text-center">
-              <div className="w-12 h-12 rounded-full gradient-hero flex items-center justify-center mx-auto mb-4">
+              <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center mx-auto mb-4">
                 <span className="font-display font-bold text-primary-foreground">{item.step}</span>
               </div>
-              <h3 className="font-display font-semibold mb-2">{item.title}</h3>
+              <h3 className="font-display font-semibold mb-2 text-foreground">{item.title}</h3>
               <p className="text-sm text-muted-foreground">{item.desc}</p>
             </div>
           ))}
