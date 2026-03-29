@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Download, Loader2, AlertCircle, CheckCircle2, ChevronDown } from "lucide-react";
+import { Download, Loader2, AlertCircle, CheckCircle2, ChevronDown, ClipboardPaste } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -53,12 +53,30 @@ const ToolPage = ({ tool }: ToolPageProps) => {
 
   const relatedTools = getRelatedTools(tool.slug);
 
+  const handlePaste = async () => {
+    try {
+      if (!navigator.clipboard) {
+        setErrorMsg("Clipboard access not supported by your browser.");
+        setStatus("error");
+        return;
+      }
+      const text = await navigator.clipboard.readText();
+      if (text) {
+        setUrl(text.trim());
+        setStatus("idle");
+      }
+    } catch (err) {
+      console.error("Paste failed", err);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!acceptFile && !url.trim()) return;
-    if (!acceptFile && !url.startsWith("http")) {
+    const cleanInput = url.trim();
+    if (!acceptFile && !cleanInput) return;
+    if (!acceptFile && !cleanInput.startsWith("http")) {
       setStatus("error");
-      setErrorMsg("Please enter a valid URL");
+      setErrorMsg("Please enter a valid URL starting with http");
       return;
     }
 
@@ -66,7 +84,7 @@ const ToolPage = ({ tool }: ToolPageProps) => {
     setErrorMsg("");
 
     try {
-      const cleanUrl = url.split("?")[0].trim();
+      const cleanUrl = cleanInput.split("?")[0].trim();
       const apiUrl = `https://toolhubworker.karanvirsidhu03.workers.dev?url=${encodeURIComponent(cleanUrl)}`;
       const res = await fetch(apiUrl);
       const data = await res.json();
@@ -94,7 +112,6 @@ const ToolPage = ({ tool }: ToolPageProps) => {
     <div className="min-h-[80vh]">
       <ToolJsonLd tool={tool} />
 
-      {/* Hero */}
       <section className={`relative overflow-hidden py-16 md:py-24 ${gradient}`}>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.1),transparent_50%)]" />
         <div className="container mx-auto px-4 relative z-10">
@@ -122,8 +139,24 @@ const ToolPage = ({ tool }: ToolPageProps) => {
                   </Button>
                 </div>
               ) : (
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Input value={url} onChange={(e) => { setUrl(e.target.value); setStatus("idle"); }} placeholder={placeholder} className="flex-1 h-16 bg-card/20 backdrop-blur-md border-2 border-primary-foreground/30 text-primary-foreground placeholder:text-primary-foreground/50 text-lg rounded-2xl shadow-[0_0_30px_rgba(255,255,255,0.1)] focus:border-primary-foreground/60 transition-all" />
+                <div className="flex flex-col sm:flex-row gap-3 relative">
+                  <div className="relative flex-1 group">
+                    <Input 
+                      value={url} 
+                      onChange={(e) => { setUrl(e.target.value); setStatus("idle"); }} 
+                      placeholder={placeholder} 
+                      className="flex-1 h-16 pr-24 bg-card/20 backdrop-blur-md border-2 border-primary-foreground/30 text-primary-foreground placeholder:text-primary-foreground/50 text-lg rounded-2xl shadow-[0_0_30px_rgba(255,255,255,0.1)] focus:border-primary-foreground/60 transition-all w-full" 
+                    />
+                    <Button
+                      type="button"
+                      onClick={handlePaste}
+                      variant="ghost"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 h-10 px-3 flex items-center gap-1.5 text-primary-foreground/70 hover:text-primary-foreground hover:bg-white/10 transition-colors rounded-xl"
+                    >
+                      <ClipboardPaste className="w-4 h-4" />
+                      <span className="text-xs font-bold">PASTE</span>
+                    </Button>
+                  </div>
                   <Button type="submit" disabled={!url.trim() || status === "loading"} size="lg" className="h-16 px-10 bg-card text-foreground hover:bg-card/90 font-bold text-lg rounded-2xl">
                     {status === "loading" ? <Loader2 className="h-5 w-5 animate-spin" /> : <Download className="h-5 w-5" />}
                   </Button>
@@ -159,7 +192,6 @@ const ToolPage = ({ tool }: ToolPageProps) => {
 
       <AdBanner className="container mx-auto px-4 rounded-lg" />
 
-      {/* How it works */}
       <section className="container mx-auto px-4 py-16">
         <h2 className="font-display text-2xl font-bold text-center mb-10">How It Works</h2>
         <div className="grid md:grid-cols-3 gap-8 max-w-3xl mx-auto">
@@ -179,7 +211,6 @@ const ToolPage = ({ tool }: ToolPageProps) => {
         </div>
       </section>
 
-      {/* SEO Content */}
       {seoContent && (
         <section className="container mx-auto px-4 pb-16">
           <div className="max-w-3xl mx-auto bg-card rounded-2xl border border-border p-8">
@@ -193,7 +224,6 @@ const ToolPage = ({ tool }: ToolPageProps) => {
         </section>
       )}
 
-      {/* FAQ */}
       {faqs.length > 0 && (
         <section className="container mx-auto px-4 pb-16">
           <h2 className="font-display text-2xl font-bold text-center mb-8">Frequently Asked Questions</h2>
@@ -215,7 +245,6 @@ const ToolPage = ({ tool }: ToolPageProps) => {
 
       <AdBanner className="container mx-auto px-4 rounded-lg" />
 
-      {/* Related Tools */}
       {relatedTools.length > 0 && (
         <section className="container mx-auto px-4 pb-16">
           <h2 className="font-display text-2xl font-bold text-center mb-8">Try Other Tools</h2>
