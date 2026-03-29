@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Download, Loader2, AlertCircle, CheckCircle2, ChevronDown, ClipboardPaste } from "lucide-react";
@@ -50,26 +50,60 @@ const ToolPage = ({ tool }: ToolPageProps) => {
   const [errorMsg, setErrorMsg] = useState("");
   const [downloadUrl, setDownloadUrl] = useState("");
   const [thumbnail, setThumbnail] = useState("");
+  const [canPaste, setCanPaste] = useState(true);
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+ if (typeof navigator === "undefined" || !navigator.clipboard || !navigator.clipboard.readText) {
+    setCanPaste(false);
+  }
+}, []);
 
   const relatedTools = getRelatedTools(tool.slug);
 
-  const handlePaste = async () => {
-    try {
-      if (!navigator.clipboard) {
-        setErrorMsg("Clipboard access not supported by your browser.");
-        setStatus("error");
-        return;
-      }
-      const text = await navigator.clipboard.readText();
-      if (text) {
-        setUrl(text.trim());
-        setStatus("idle");
-      }
-    } catch (err) {
-      console.error("Paste failed", err);
+ const handlePaste = async () => {
+  try {
+    if (typeof navigator === "undefined" || !navigator.clipboard || !navigator.clipboard.readText) {
+      throw new Error("Clipboard API not supported");
     }
-  };
 
+    if (navigator.permissions) {
+      try {
+        const permission = await navigator.permissions.query({
+          name: "clipboard-read" as PermissionName,
+        });
+
+        if (permission.state === "denied") {
+          throw new Error("Clipboard permission denied");
+        }
+      } catch {
+        // ignore if not supported
+      }
+    }
+
+    const text = await navigator.clipboard.readText();
+
+    if (!text) {
+      throw new Error("Clipboard is empty");
+    }
+
+    setUrl(text.trim());
+
+    // ✅ safe focus
+    if (inputRef.current) {
+      inputRef.current.focus();
+    } else {
+      const inputEl = document.querySelector("input");
+      inputEl?.focus();
+    }
+
+    setStatus("idle");
+
+  } catch (err) {
+    console.error("Paste failed:", err);
+    setStatus("error");
+    setErrorMsg("Paste blocked. Please press Ctrl+V (or Cmd+V on Mac).");
+  }
+};
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanInput = url.trim();
@@ -144,6 +178,7 @@ const ToolPage = ({ tool }: ToolPageProps) => {
       {/* 1. The Search Input */}
       <div className="flex-1 w-full">
         <Input 
+          ref={inputRef}
           value={url} 
           onChange={(e) => { setUrl(e.target.value); setStatus("idle"); }} 
           placeholder={placeholder} 
@@ -155,11 +190,13 @@ const ToolPage = ({ tool }: ToolPageProps) => {
       <Button
         type="button"
         onClick={handlePaste}
+        disabled={!canPaste}
         variant="secondary"
         className="h-16 px-6 bg-white/10 hover:bg-white/20 text-white border-2 border-white/20 rounded-2xl flex items-center gap-2 transition-all active:scale-95 shrink-0"
       >
         <ClipboardPaste className="w-5 h-5" />
-        <span className="font-bold text-sm">PASTE</span>
+        <span className="font-bold text-sm">   
+          {canPaste ? "PASTE" : "UNSUPPORTED"} </span>
       </Button>
       
       {/* 3. The Submit Button */}
