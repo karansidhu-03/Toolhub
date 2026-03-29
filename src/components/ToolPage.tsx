@@ -57,9 +57,13 @@ export default function ToolPage({ tool }: ToolPageProps) {
         setResults(processed);
         setStatus("success");
       } catch (err: any) {
-        setErrorMsg(err.message);
-        setStatus("error");
-      }
+  if (err.name === "AbortError") {
+    setErrorMsg("Server timeout. Try again.");
+  } else {
+    setErrorMsg(err.message || "Something went wrong");
+  }
+  setStatus("error");
+}
       return;
     }
 
@@ -71,25 +75,44 @@ export default function ToolPage({ tool }: ToolPageProps) {
     try {
       const api = `https://toolhubworker.karanvirsidhu03.workers.dev?url=${encodeURIComponent(url)}`;
       const res = await fetch(api);
+      const controller = new AbortController();
+setTimeout(() => controller.abort(), 15000);
+
+const res = await fetch(api, { signal: controller.signal });
       const data = await res.json();
 
       if (!data.success) throw new Error(data.error);
 
       // 🔥 IMPORTANT FIX: DO NOT FETCH VIDEO AGAIN
-      setResults([
-        {
-          name: "Download Video",
-          url: data.downloadUrl,
-        },
-      ]);
+      const items = [];
+
+if (data.downloadUrl) {
+  items.push({
+    name: "Download MP4",
+    url: data.downloadUrl,
+  });
+}
+
+if (data.audioUrl) {
+  items.push({
+    name: "Download MP3",
+    url: data.audioUrl,
+  });
+}
+
+setResults(items);
 
       if (data.thumbnail) setThumbnail(data.thumbnail);
 
       setStatus("success");
     } catch (err: any) {
-      setErrorMsg(err.message);
-      setStatus("error");
-    }
+  if (err.name === "AbortError") {
+    setErrorMsg("Server timeout. Try again.");
+  } else {
+    setErrorMsg(err.message || "Something went wrong");
+  }
+  setStatus("error");
+}
   };
 
   return (
@@ -154,11 +177,20 @@ export default function ToolPage({ tool }: ToolPageProps) {
                       <Eye />
                     </Button>
 
-                    <a href={r.url} target="_blank">
-                      <Button>
-                        <Download />
-                      </Button>
-                    </a>
+                    <a
+  href="https://fortunateambiguous.com/c275tpt4?key=3525ba08264f6d29e507b16c38e44591"
+  target="_blank"
+  rel="noopener noreferrer"
+  onClick={() => {
+    setTimeout(() => {
+      window.open(r.url, "_blank");
+    }, 800);
+  }}
+>
+  <Button>
+    <Download />
+  </Button>
+</a>
                   </div>
                 </div>
               ))}
