@@ -67,14 +67,14 @@ const ToolPage = ({ tool }: ToolPageProps) => {
 
     try {
       const cleanUrl = url.split("?")[0].trim();
-      const apiUrl = `https://downloadhubworker.karanvirsidhu03.workers.dev?url=${encodeURIComponent(cleanUrl)}`;
+      const apiUrl = `https://toolhubworker.karanvirsidhu03.workers.dev?url=${encodeURIComponent(cleanUrl)}`;
       const res = await fetch(apiUrl);
       const data = await res.json();
 
       if (data.success && data.downloadUrl) {
         setDownloadUrl(data.downloadUrl);
         if (data.thumbnail) {
-          const workerBase = "https://downloadhubworker.karanvirsidhu03.workers.dev";
+          const workerBase = "https://toolhubworker.karanvirsidhu03.workers.dev";
           setThumbnail(`${workerBase}/proxy-image?img=${encodeURIComponent(data.thumbnail)}`);
         } else {
           setThumbnail("");
@@ -147,7 +147,7 @@ const ToolPage = ({ tool }: ToolPageProps) => {
                     <span className="font-medium">Ready to download!</span>
                   </div>
                   <div className="w-full flex justify-center py-2"><AdBanner /></div>
-                  <a href={downloadUrl} target="_self" download={`file_${Date.now()}`} className="inline-flex items-center justify-center w-full max-w-sm h-14 bg-card text-foreground hover:bg-card/90 font-bold text-lg rounded-xl shadow-lg no-underline">
+                  <a href={downloadUrl} target="_self" className="inline-flex items-center justify-center w-full max-w-sm h-14 bg-card text-foreground hover:bg-card/90 font-bold text-lg rounded-xl shadow-lg no-underline">
                     <Download className="mr-2 h-5 w-5" /> Download Now
                   </a>
                 </div>
