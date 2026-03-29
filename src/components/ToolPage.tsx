@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import AdBanner from "./AdBanner";
 import { type Tool, getRelatedTools } from "@/lib/tools";
+import { compressPDF, compressImageFile } from "@/lib/pdf-engine";
 
 type ToolPageProps = {
   tool: Tool;
@@ -107,8 +108,7 @@ const ToolPage = ({ tool }: ToolPageProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // --- CASE 1: FILE TOOLS (PDF, Image, Video Compressor) ---
-    // This logic only runs if the tool is set to accept files (like PDF tools)
+    // --- BRANCH A: FILE TOOLS (PDF & IMAGE) ---
     if (acceptFile) {
       if (!file) {
         setStatus("error");
@@ -120,24 +120,35 @@ const ToolPage = ({ tool }: ToolPageProps) => {
       setErrorMsg("");
 
       try {
-        // Step 2 will go here: Actual PDF/Image processing engine
-        console.log("File detected for processing:", file.name);
-        
-        // Temporary placeholder so the UI doesn't hang
-        setTimeout(() => {
-          setStatus("error");
-          setErrorMsg("File processing engine is currently being connected. URL downloaders are still active.");
-        }, 2000);
+        let processedBlob: Blob;
 
-      } catch (err) {
+        // Route to the correct engine based on the tool's slug
+        if (tool.slug === "compress-pdf") {
+          processedBlob = await compressPDF(file);
+        } else if (tool.slug === "image-compressor") {
+          const compressedFile = await compressImageFile(file);
+          processedBlob = new Blob([compressedFile], { type: compressedFile.type });
+        } else {
+          // Fallback for tools we haven't linked yet (like Merge/Split)
+          throw new Error("This tool engine is currently being updated. Please try again later.");
+        }
+
+        // Create the local download link
+        const localUrl = URL.createObjectURL(processedBlob);
+        
+        // Update state to show the success UI and download button
+        setDownloadUrl(localUrl);
+        setStatus("success");
+
+      } catch (err: any) {
+        console.error("Processing error:", err);
         setStatus("error");
-        setErrorMsg("An error occurred while processing your file.");
+        setErrorMsg(err.message || "Failed to process the file. Please try a different one.");
       }
-      return; // Stop here so it doesn't try to run the URL logic
+      return; // Exit here so it doesn't run the URL logic below
     }
 
-    // --- CASE 2: URL DOWNLOADERS (Instagram, TikTok, YouTube) ---
-    // This is your EXISTING logic. It remains 100% the same.
+    // --- BRANCH B: URL DOWNLOADERS (INSTAGRAM, TIKTOK, YOUTUBE) ---
     const cleanInput = url.trim();
     if (!cleanInput) return;
     if (!cleanInput.startsWith("http")) {
