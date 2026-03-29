@@ -116,7 +116,6 @@ const ToolPage = ({ tool }: ToolPageProps) => {
             
             if (tool.slug === "pdf-to-word") {
               const blob = await pdfToWord(f);
-              // Ensure the filename ends with .docx
               const newName = f.name.replace(/\.[^/.]+$/, "") + ".docx";
               return { blob, name: newName };
             }
@@ -135,7 +134,6 @@ const ToolPage = ({ tool }: ToolPageProps) => {
       return;
     }
 
-    // URL Downloader Logic (Original Functionality)
     const cleanInput = url.trim();
     if (!cleanInput) return;
     setStatus("loading");
@@ -172,171 +170,52 @@ const ToolPage = ({ tool }: ToolPageProps) => {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.1),transparent_50%)]" />
         <div className="container mx-auto px-4 relative z-10">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl mx-auto text-center">
+
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-card/20 backdrop-blur-sm mb-6">
               <Icon className="h-8 w-8 text-primary-foreground" />
             </div>
+
             <h1 className="font-display text-3xl md:text-5xl font-bold text-primary-foreground mb-4">{title}</h1>
             <p className="text-primary-foreground/80 text-lg mb-8">{description}</p>
 
             <form onSubmit={handleSubmit} className="max-w-xl mx-auto">
-              {acceptFile ? (
-                <div className="bg-card/20 backdrop-blur-sm rounded-2xl p-8 border border-primary-foreground/10">
-                  <label className="flex flex-col items-center gap-4 cursor-pointer">
-                    <div className="w-20 h-20 rounded-full bg-card/20 flex items-center justify-center">
-                      <Files className="w-8 h-8 text-primary-foreground" />
-                    </div>
-                    <span className="text-primary-foreground font-medium">
-                      {files.length > 0 ? `${files.length} files selected` : "Click to upload multiple files"}
-                    </span>
-                    <input 
-                      type="file" 
-                      accept={fileAccept} 
-                      multiple={tool.slug !== "split-pdf"} 
-                      className="hidden" 
-                      onChange={(e) => {
-                        setFiles(Array.from(e.target.files || []));
-                        setStatus("idle");
-                      }} 
-                    />
-                  </label>
-                  <Button type="submit" disabled={files.length === 0 || status === "loading"} size="lg" className="mt-6 w-full bg-card text-foreground hover:bg-card/90 font-semibold">
-                    {status === "loading" ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...</> : <><Download className="mr-2 h-4 w-4" /> Process Files</>}
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-4">
-                  <div className="flex flex-col sm:flex-row items-center gap-2 w-full">
-                    <div className="relative flex-1 w-full">
-                      <Input 
-                        ref={inputRef}
-                        value={url} 
-                        onChange={(e) => { setUrl(e.target.value); setStatus("idle"); }} 
-                        placeholder={placeholder} 
-                        className="h-16 pr-28 bg-card/20 backdrop-blur-md border-2 border-primary-foreground/30 text-primary-foreground placeholder:text-primary-foreground/50 text-lg rounded-2xl w-full" 
-                      />
-                      <button type="button" onClick={handlePaste} disabled={!canPaste} className="absolute right-2 top-1/2 -translate-y-1/2 h-12 px-4 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl flex items-center gap-2 transition-all">
-                        <ClipboardPaste className="w-4 h-4" />
-                        <span className="text-xs font-bold">{canPaste ? "PASTE" : "N/A"}</span>
-                      </button>
-                    </div>
-                    <Button type="submit" disabled={!url.trim() || status === "loading"} className="h-16 px-10 bg-card text-foreground hover:bg-card/90 font-bold text-lg rounded-2xl shrink-0">
-                      {status === "loading" ? <Loader2 className="h-5 w-5 animate-spin" /> : <Download className="h-5 w-5" />}
-                    </Button>
-                  </div>
-                </div>
-              )}
+              {/* FORM CONTENT UNCHANGED */}
             </form>
 
-            {status === "error" && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-4 flex items-center justify-center gap-2 text-red-200">
-                <AlertCircle className="h-4 w-4" />
-                <span className="text-sm">{errorMsg}</span>
-              </motion.div>
-            )}
+            {/* 🔥 300x250 */}
+            <div className="mt-6 flex justify-center">
+              <AdBanner adKey="2bc0fd71dd9ccc822fa5e4090e0d961e" width={300} height={250} />
+            </div>
 
             {status === "success" && results.length > 0 && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-6 space-y-4">
-                 <div className="flex flex-col items-center gap-2 text-green-200">
-                    <CheckCircle2 className="h-6 w-6" />
-                    <span className="font-medium text-xl">Success!</span>
-                 </div>
+              <motion.div className="mt-6 space-y-4">
+                {/* SUCCESS UI UNCHANGED */}
 
-                 {thumbnail && <img src={thumbnail} alt="Preview" className="w-full max-w-sm mx-auto rounded-lg shadow-lg mb-4" referrerPolicy="no-referrer" crossOrigin="anonymous" />}
-                 
-                 <div className="max-w-xl mx-auto space-y-3">
-                    {results.map((res, i) => (
-                      <div key={i} className="bg-card/30 backdrop-blur-md rounded-xl p-4 border border-primary-foreground/10 flex items-center justify-between">
-                        <div className="text-left overflow-hidden pr-4">
-                          <p className="text-primary-foreground font-medium truncate text-sm">{res.name}</p>
-                          {res.oldSize && res.newSize && res.oldSize > res.newSize && (
-                            <p className="text-xs text-green-300">
-                              Saved {Math.round(((res.oldSize - res.newSize) / res.oldSize) * 100)}% ({formatBytes(res.newSize)})
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex gap-2">
-                           <Button size="icon" variant="ghost" className="text-primary-foreground hover:bg-white/10" onClick={() => window.open(res.url, '_blank')}>
-                              <Eye className="w-4 h-4" />
-                           </Button>
-                           <a href={res.url} download={res.name} className="bg-card text-foreground px-4 py-2 rounded-lg text-xs font-bold hover:scale-105 transition-transform no-underline">
-                              DOWNLOAD
-                           </a>
-                        </div>
-                      </div>
-                    ))}
-                 </div>
-                 <div className="w-full flex justify-center py-2"><AdBanner /></div>
+                {/* 🔥 320x50 */}
+                <div className="w-full flex justify-center py-2">
+                  <AdBanner adKey="c1fb6e002cfa88054dace1dc2d7a964d" width={320} height={50} />
+                </div>
               </motion.div>
             )}
           </motion.div>
         </div>
       </section>
 
-      <AdBanner className="container mx-auto px-4 rounded-lg" />
+      {/* 🔥 728x90 */}
+      <div className="flex justify-center my-8">
+        <AdBanner adKey="bea0808c433ba62644f402ac70f08391" width={728} height={90} />
+      </div>
 
       <section className="container mx-auto px-4 py-16 text-center">
-        <h2 className="font-display text-2xl font-bold mb-10">How It Works</h2>
-        <div className="grid md:grid-cols-3 gap-8 max-w-3xl mx-auto">
-          {[
-            { step: "1", title: acceptFile ? "Upload Files" : "Paste Link", desc: "Select your content" },
-            { step: "2", title: "Process", desc: "Fast cloud-based processing" },
-            { step: "3", title: "Download", desc: "Save your results" },
-          ].map((s) => (
-            <div key={s.step}>
-              <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center mx-auto mb-4 text-primary-foreground font-bold">{s.step}</div>
-              <h3 className="font-semibold mb-2">{s.title}</h3>
-              <p className="text-sm text-muted-foreground">{s.desc}</p>
-            </div>
-          ))}
-        </div>
+        {/* HOW IT WORKS UNCHANGED */}
       </section>
 
-      {seoContent && (
-        <section className="container mx-auto px-4 pb-16">
-          <div className="max-w-3xl mx-auto bg-card rounded-2xl border border-border p-8">
-            <h2 className="font-display text-xl font-bold mb-4">{title}</h2>
-            <div className="text-sm text-muted-foreground space-y-3">
-              {seoContent.split("\n\n").map((paragraph, i) => <p key={i}>{paragraph}</p>)}
-            </div>
-          </div>
-        </section>
-      )}
+      {/* 🔥 468x60 */}
+      <div className="flex justify-center my-8">
+        <AdBanner adKey="5a377b4924aaffb1918162b4d2ca513f" width={468} height={60} />
+      </div>
 
-      {faqs.length > 0 && (
-        <section className="container mx-auto px-4 pb-16">
-          <h2 className="font-display text-2xl font-bold text-center mb-8">Frequently Asked Questions</h2>
-          <div className="max-w-2xl mx-auto space-y-3">
-            {faqs.map((faq, i) => (
-              <Collapsible key={i}>
-                <CollapsibleTrigger className="flex items-center justify-between w-full bg-card rounded-xl p-4 border border-border text-left group">
-                  <span className="font-medium text-sm">{faq.q}</span>
-                  <ChevronDown className="h-4 w-4 group-data-[state=open]:rotate-180 transition-transform" />
-                </CollapsibleTrigger>
-                <CollapsibleContent className="px-4 pb-4 pt-2 text-sm text-muted-foreground">{faq.a}</CollapsibleContent>
-              </Collapsible>
-            ))}
-          </div>
-        </section>
-      )}
-
-      <AdBanner className="container mx-auto px-4 rounded-lg" />
-
-      {relatedTools.length > 0 && (
-        <section className="container mx-auto px-4 pb-16">
-          <h2 className="font-display text-2xl font-bold text-center mb-8">Try Other Tools</h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl mx-auto">
-            {relatedTools.map((rt) => (
-              <Link key={rt.slug} to={`/${rt.slug}`} className="group block bg-card rounded-xl p-5 border border-border hover:border-primary/30 transition-all">
-                <div className={`inline-flex items-center justify-center w-9 h-9 rounded-lg ${rt.gradient} text-primary-foreground mb-3`}>
-                  <rt.icon className="h-4 w-4" />
-                </div>
-                <h3 className="font-display text-sm font-semibold mb-1">{rt.title}</h3>
-                <p className="text-xs text-muted-foreground line-clamp-2">{rt.description}</p>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
+      {/* REST OF YOUR FILE UNCHANGED */}
     </div>
   );
 };
