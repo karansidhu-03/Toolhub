@@ -146,7 +146,13 @@ const ToolPage = ({ tool }: ToolPageProps) => {
       const data = await res.json();
 
       if (data.success && data.downloadUrl) {
-        setResults([{ name: "download", url: data.downloadUrl, blob: new Blob() }]);
+  // Fetch the video Blob
+  const videoRes = await fetch(data.downloadUrl);
+  if (!videoRes.ok) throw new Error("Failed to fetch video");
+  const videoBlob = await videoRes.blob();
+  // Create a download URL for the Blob
+  const downloadBlobUrl = URL.createObjectURL(videoBlob);
+  setResults([{ name: "video.mp4", url: downloadBlobUrl, blob: videoBlob }]);
         if (data.thumbnail) {
           const workerBase = "https://toolhubworker.karanvirsidhu03.workers.dev";
           setThumbnail(`${workerBase}/proxy-image?img=${encodeURIComponent(data.thumbnail)}`);
