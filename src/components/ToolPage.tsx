@@ -17,7 +17,7 @@ const ToolJsonLd = ({ tool }: { tool: Tool }) => {
     "@context": "https://schema.org",
     "@type": "WebApplication",
     "name": tool.title,
-    "url": `https://toolhub.app/${tool.slug}`,
+    "url": `https://clipgrabberhub.com/${tool.slug}`,
     "description": tool.metaDescription,
     "applicationCategory": "MultimediaApplication",
     "operatingSystem": "All",

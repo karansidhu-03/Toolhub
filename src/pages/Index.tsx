@@ -1,17 +1,17 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Zap, Shield, Globe, Search, TrendingUp } from "lucide-react";
+import { ArrowRight, Zap, Shield, Globe, Search, TrendingUp, Instagram, Youtube, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { categories, tools, type ToolCategory } from "@/lib/tools";
 import AdBanner from "@/components/AdBanner";
 
-const popularSlugs = ["compress-pdf", "image-compressor", "pdf-to-word", "downloader", "video-converter", "image-resizer"];
+const popularSlugs = ["instagram-downloader", "tiktok-downloader", "youtube-downloader", "compress-pdf", "image-compressor", "video-converter"];
 const popularTools = popularSlugs.map((s) => tools.find((t) => t.slug === s)!).filter(Boolean);
 
 const features = [
-  { icon: Zap, title: "Lightning Fast", desc: "Browser-based processing with instant results" },
+  { icon: Zap, title: "Lightning Fast", desc: "Instant processing with no wait times" },
   { icon: Shield, title: "100% Free & Secure", desc: "No registration, no data stored on servers" },
   { icon: Globe, title: "Works Everywhere", desc: "Compatible with all devices and browsers" },
 ];
@@ -44,8 +44,21 @@ const Index = () => {
               Free Online <span className="gradient-text">Video Downloader</span> & File Converter Tools
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10">
-              Compress PDFs, convert images, download videos from Instagram, YouTube & TikTok — 13+ free tools for every file task. No registration required.
+              Download videos from Instagram, TikTok & YouTube without watermark. Compress PDFs, convert images — 15+ free tools for every file task.
             </p>
+
+            {/* Quick access buttons */}
+            <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
+              <Link to="/instagram-downloader" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 text-white font-medium text-sm hover:opacity-90 transition-opacity">
+                <Instagram className="h-4 w-4" /> Instagram
+              </Link>
+              <Link to="/tiktok-downloader" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-medium text-sm hover:opacity-90 transition-opacity">
+                <Video className="h-4 w-4" /> TikTok
+              </Link>
+              <Link to="/youtube-downloader" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-red-500 to-red-600 text-white font-medium text-sm hover:opacity-90 transition-opacity">
+                <Youtube className="h-4 w-4" /> YouTube
+              </Link>
+            </div>
 
             {/* Universal Search Box */}
             <div className="max-w-xl mx-auto relative">
@@ -55,7 +68,7 @@ const Index = () => {
                   <Input
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="What do you need? e.g. compress PDF, download TikTok..."
+                    placeholder="Search tools: compress PDF, download TikTok..."
                     className="h-14 pl-12 text-base rounded-xl"
                   />
                 </div>
@@ -154,13 +167,13 @@ const Index = () => {
           <h2 className="font-display text-xl font-bold mb-4">Your All-in-One Online File Toolkit</h2>
           <div className="text-sm text-muted-foreground space-y-3">
             <p>
-              ToolHub is your go-to destination for free online file tools. Whether you need to <Link to="/compress-pdf" className="text-primary hover:underline">compress PDF files</Link>, <Link to="/image-compressor" className="text-primary hover:underline">optimize images</Link>, <Link to="/video-converter" className="text-primary hover:underline">convert videos to MP4</Link>, or <Link to="/downloader" className="text-primary hover:underline">download videos from Instagram, YouTube, and TikTok</Link> — we have you covered.
+              ClipGrabber Hub is your go-to destination for free online tools. Download videos from <Link to="/instagram-downloader" className="text-primary hover:underline">Instagram</Link>, <Link to="/tiktok-downloader" className="text-primary hover:underline">TikTok (no watermark)</Link>, and <Link to="/youtube-downloader" className="text-primary hover:underline">YouTube</Link> in MP4 or MP3 format — or use our powerful file tools to <Link to="/compress-pdf" className="text-primary hover:underline">compress PDFs</Link>, <Link to="/image-compressor" className="text-primary hover:underline">optimize images</Link>, and <Link to="/video-converter" className="text-primary hover:underline">convert videos</Link>.
             </p>
             <p>
-              All our tools are 100% free, require no registration, and work directly in your browser. Your files never leave your device, ensuring complete privacy and security. Compatible with all devices including desktop, tablet, and mobile.
+              All tools are 100% free, require no registration, and work directly in your browser. Your files never leave your device, ensuring complete privacy and security.
             </p>
             <p>
-              From <Link to="/pdf-to-word" className="text-primary hover:underline">PDF to Word conversion</Link> to <Link to="/image-resizer" className="text-primary hover:underline">image resizing</Link> and <Link to="/video-compressor" className="text-primary hover:underline">video compression</Link> — ToolHub provides fast, reliable tools for all your file needs.
+              From <Link to="/pdf-to-word" className="text-primary hover:underline">PDF to Word conversion</Link> to <Link to="/image-resizer" className="text-primary hover:underline">image resizing</Link> and <Link to="/video-compressor" className="text-primary hover:underline">video compression</Link> — ClipGrabber Hub provides fast, reliable tools for all your file needs.
             </p>
           </div>
         </div>
@@ -185,7 +198,7 @@ const Index = () => {
       <section className="container mx-auto px-4 pb-16">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="font-display text-2xl font-bold mb-3">Learn More on Our Blog</h2>
-          <p className="text-muted-foreground mb-6">Read guides and tips about PDF compression, image optimization, video downloading, and more.</p>
+          <p className="text-muted-foreground mb-6">Read guides and tips about video downloading, PDF compression, image optimization, and more.</p>
           <Link to="/blog" className="inline-flex items-center gap-2 text-primary font-medium hover:underline">
             Visit the Blog <ArrowRight className="h-4 w-4" />
           </Link>

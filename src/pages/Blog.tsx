@@ -6,20 +6,6 @@ import AdBanner from "@/components/AdBanner";
 
 const posts = [
   {
-    slug: "how-to-compress-pdf",
-    title: "How to Compress PDF Files Without Losing Quality",
-    excerpt: "Learn the best techniques to reduce PDF file size while maintaining document quality. Step-by-step guide with expert tips.",
-    date: "Mar 25, 2026",
-    category: "PDF",
-  },
-  {
-    slug: "best-image-compression-tips",
-    title: "5 Tips to Compress Images Without Losing Quality",
-    excerpt: "Optimize your images for the web with these proven compression techniques. Improve page speed and SEO rankings.",
-    date: "Mar 22, 2026",
-    category: "Images",
-  },
-  {
     slug: "how-to-download-instagram-reels",
     title: "How to Download Instagram Reels in 2026",
     excerpt: "The fastest and easiest way to save Instagram Reels to your phone or computer. Free, no registration required.",
@@ -33,21 +19,42 @@ const posts = [
     date: "Mar 14, 2026",
     category: "TikTok",
   },
+  {
+    slug: "youtube-to-mp3-guide",
+    title: "How to Convert YouTube Videos to MP3 in 2026",
+    excerpt: "The easiest way to extract audio from YouTube videos. Save music, podcasts, and more as MP3 files.",
+    date: "Mar 20, 2026",
+    category: "YouTube",
+  },
+  {
+    slug: "how-to-compress-pdf",
+    title: "How to Compress PDF Files Without Losing Quality",
+    excerpt: "Learn the best techniques to reduce PDF file size while maintaining document quality. Step-by-step guide.",
+    date: "Mar 25, 2026",
+    category: "PDF",
+  },
+  {
+    slug: "best-image-compression-tips",
+    title: "5 Tips to Compress Images Without Losing Quality",
+    excerpt: "Optimize your images for the web with these proven compression techniques. Improve page speed and SEO.",
+    date: "Mar 22, 2026",
+    category: "Images",
+  },
 ];
 
 const Blog = () => {
   useEffect(() => {
-    document.title = "Blog — Tips & Guides for PDF, Image & Video Tools | ToolHub";
+    document.title = "Blog — Tips & Guides for Video Downloading & File Tools | ClipGrabber Hub";
     const metaDesc = document.querySelector('meta[name="description"]');
-    if (metaDesc) metaDesc.setAttribute("content", "Read tips, guides, and tutorials about PDF compression, image optimization, video downloading, and more. Free tools and expert advice.");
+    if (metaDesc) metaDesc.setAttribute("content", "Read tips, guides, and tutorials about downloading Instagram Reels, TikTok videos without watermark, YouTube to MP3, PDF compression, and more.");
   }, []);
 
   return (
     <div className="min-h-[80vh]">
       <section className="container mx-auto px-4 py-16">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
-          <h1 className="font-display text-3xl md:text-5xl font-bold mb-4">ToolHub Blog</h1>
-          <p className="text-muted-foreground max-w-lg mx-auto">Tips, guides, and tutorials for getting the most out of our free online tools.</p>
+          <h1 className="font-display text-3xl md:text-5xl font-bold mb-4">ClipGrabber Hub Blog</h1>
+          <p className="text-muted-foreground max-w-lg mx-auto">Tips, guides, and tutorials for downloading videos and using our free online tools.</p>
         </motion.div>
 
         <AdBanner className="mb-8 rounded-lg max-w-3xl mx-auto" />

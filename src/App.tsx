@@ -16,12 +16,13 @@ import { categories, getToolBySlug, seoRedirects } from "@/lib/tools";
 const queryClient = new QueryClient();
 
 const categorySlugs = Object.values(categories).map((c) => c.slug);
+const downloaderSlugs = ["instagram-downloader", "tiktok-downloader", "youtube-downloader"];
 
 const SlugRouter = () => {
   const { slug } = useParams<{ slug: string }>();
   if (!slug) return <Navigate to="/" replace />;
-  // SEO redirect slugs
   if (seoRedirects[slug]) return <Navigate to={seoRedirects[slug]} replace />;
+  if (downloaderSlugs.includes(slug)) return <DownloaderPage />;
   if (categorySlugs.includes(slug)) return <CategoryPage />;
   if (getToolBySlug(slug)) return <ToolPageWrapper />;
   return <NotFound />;
@@ -38,7 +39,6 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
-            <Route path="/downloader" element={<DownloaderPage />} />
             <Route path="/:slug" element={<SlugRouter />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

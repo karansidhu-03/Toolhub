@@ -1,13 +1,14 @@
 import { Link, useLocation } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, ChevronDown, Search, Wrench } from "lucide-react";
+import { Menu, X, ChevronDown, Search, Download } from "lucide-react";
 import { categories, getToolsByCategory, type ToolCategory } from "@/lib/tools";
 import { Input } from "@/components/ui/input";
 import { tools } from "@/lib/tools";
 import AdBanner from "./AdBanner";
 
-const navCategories: { key: ToolCategory; label: string }[] = [
+const navGroups: { key: ToolCategory; label: string }[] = [
+  { key: "downloader", label: "Downloaders" },
   { key: "pdf", label: "PDF Tools" },
   { key: "image", label: "Image Tools" },
   { key: "video", label: "Video Tools" },
@@ -52,9 +53,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         <div className="container mx-auto flex items-center justify-between px-4 py-3">
           <Link to="/" className="flex items-center gap-2">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg gradient-hero">
-              <Wrench className="h-5 w-5 text-primary-foreground" />
+              <Download className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="font-display text-xl font-bold gradient-text">ToolHub</span>
+            <span className="font-display text-xl font-bold gradient-text">ClipGrabber Hub</span>
           </Link>
 
           {/* Desktop Nav */}
@@ -68,7 +69,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               Home
             </Link>
 
-            {navCategories.map((cat) => (
+            {navGroups.map((cat) => (
               <div
                 key={cat.key}
                 className="relative"
@@ -78,7 +79,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 <Link
                   to={`/${categories[cat.key].slug}`}
                   className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    location.pathname.includes(categories[cat.key].slug) ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    location.pathname.includes(categories[cat.key].slug) || getToolsByCategory(cat.key).some(t => location.pathname === `/${t.slug}`)
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
                   }`}
                 >
                   {cat.label}
@@ -92,7 +95,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 4 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute top-full left-0 mt-1 w-56 bg-card rounded-xl border border-border shadow-lg p-2 z-50"
+                      className="absolute top-full left-0 mt-1 w-64 bg-card rounded-xl border border-border shadow-lg p-2 z-50"
                     >
                       {getToolsByCategory(cat.key).map((tool) => (
                         <Link
@@ -111,18 +114,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             ))}
 
             <Link
-              to="/downloader"
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                location.pathname === "/downloader" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"
-              }`}
-            >
-              Downloader
-            </Link>
-
-            <Link
               to="/blog"
               className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                location.pathname === "/blog" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                location.pathname.startsWith("/blog") ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"
               }`}
             >
               Blog
@@ -196,7 +190,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             >
               <div className="px-4 py-3 space-y-1">
                 <Link to="/" className="block px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted">Home</Link>
-                {navCategories.map((cat) => (
+                {navGroups.map((cat) => (
                   <div key={cat.key}>
                     <Link
                       to={`/${categories[cat.key].slug}`}
@@ -217,7 +211,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                     </div>
                   </div>
                 ))}
-                <Link to="/downloader" className="block px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted">Downloader</Link>
                 <Link to="/blog" className="block px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted">Blog</Link>
               </div>
             </motion.nav>
@@ -234,12 +227,12 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             <div className="md:col-span-2">
               <Link to="/" className="flex items-center gap-2 mb-4">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg gradient-hero">
-                  <Wrench className="h-4 w-4 text-primary-foreground" />
+                  <Download className="h-4 w-4 text-primary-foreground" />
                 </div>
-                <span className="font-display text-lg font-bold">ToolHub</span>
+                <span className="font-display text-lg font-bold">ClipGrabber Hub</span>
               </Link>
               <p className="text-sm text-muted-foreground max-w-xs">
-                Free online tools to convert, compress, and download your files. Fast, secure, and easy to use.
+                Free online tools to download videos, compress PDFs, and convert files. Fast, secure, and easy to use.
               </p>
             </div>
             {Object.entries(categories).map(([key, cat]) => (
@@ -257,8 +250,11 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               </div>
             ))}
           </div>
-          <div className="mt-8 pt-8 border-t border-border text-center text-sm text-muted-foreground">
-            © {new Date().getFullYear()} ToolHub. All rights reserved.
+          <div className="mt-8 pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+            <span>© {new Date().getFullYear()} ClipGrabber Hub. All rights reserved.</span>
+            <div className="flex gap-4">
+              <Link to="/blog" className="hover:text-primary transition-colors">Blog</Link>
+            </div>
           </div>
         </div>
       </footer>

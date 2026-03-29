@@ -13,4 +13,4 @@ Allow: /
 User-agent: *
 Allow: /
 
-Sitemap: https://toolhub.app/sitemap.xml
+Sitemap: https://clipgrabberhub.com/sitemap.xml
