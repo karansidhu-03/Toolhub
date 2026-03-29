@@ -113,7 +113,14 @@ const ToolPage = ({ tool }: ToolPageProps) => {
           processed = await processBatch(files, async (f) => {
             if (tool.slug === "compress-pdf") return await compressPDF(f);
             if (tool.slug === "image-compressor") return await compressImageFile(f);
-            if (tool.slug === "pdf-to-word") return { blob: await pdfToWord(f) };
+            
+            if (tool.slug === "pdf-to-word") {
+              const blob = await pdfToWord(f);
+              // Ensure the filename ends with .docx
+              const newName = f.name.replace(/\.[^/.]+$/, "") + ".docx";
+              return { blob, name: newName };
+            }
+            
             if (tool.slug === "split-pdf") return { blob: await splitPDF(f) };
             throw new Error("Tool logic not found.");
           });
@@ -234,7 +241,7 @@ const ToolPage = ({ tool }: ToolPageProps) => {
                     <span className="font-medium text-xl">Success!</span>
                  </div>
 
-                 {thumbnail && <img src={thumbnail} alt="Preview" className="w-full max-w-sm mx-auto rounded-lg shadow-lg mb-4" />}
+                 {thumbnail && <img src={thumbnail} alt="Preview" className="w-full max-w-sm mx-auto rounded-lg shadow-lg mb-4" referrerPolicy="no-referrer" crossOrigin="anonymous" />}
                  
                  <div className="max-w-xl mx-auto space-y-3">
                     {results.map((res, i) => (
@@ -267,7 +274,6 @@ const ToolPage = ({ tool }: ToolPageProps) => {
 
       <AdBanner className="container mx-auto px-4 rounded-lg" />
 
-      {/* Logic for Steps, SEO Content, and FAQs remains the same */}
       <section className="container mx-auto px-4 py-16 text-center">
         <h2 className="font-display text-2xl font-bold mb-10">How It Works</h2>
         <div className="grid md:grid-cols-3 gap-8 max-w-3xl mx-auto">
@@ -312,6 +318,8 @@ const ToolPage = ({ tool }: ToolPageProps) => {
           </div>
         </section>
       )}
+
+      <AdBanner className="container mx-auto px-4 rounded-lg" />
 
       {relatedTools.length > 0 && (
         <section className="container mx-auto px-4 pb-16">
