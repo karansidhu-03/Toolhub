@@ -138,26 +138,28 @@ const ToolPage = ({ tool }: ToolPageProps) => {
                     {status === "loading" ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...</> : <><Download className="mr-2 h-4 w-4" /> Process File</>}
                   </Button>
                 </div>
-              ) : (
-  <div className="flex flex-col gap-3">
-    <div className="flex flex-col sm:flex-row gap-3">
+             ) : (
+  <div className="flex flex-col gap-4">
+    <div className="flex flex-col sm:flex-row items-stretch gap-3">
       {/* Search Input and Paste Button Group */}
-      <div className="relative flex-1 flex items-center">
+      <div className="relative flex-1 flex items-center min-w-0">
         <Input 
           value={url} 
           onChange={(e) => { setUrl(e.target.value); setStatus("idle"); }} 
           placeholder={placeholder} 
-          className="h-16 pr-24 bg-card/20 backdrop-blur-md border-2 border-primary-foreground/30 text-primary-foreground placeholder:text-primary-foreground/50 text-lg rounded-2xl shadow-[0_0_30px_rgba(255,255,255,0.1)] focus:border-primary-foreground/60 transition-all w-full" 
+          className="h-16 pr-28 bg-card/20 backdrop-blur-md border-2 border-primary-foreground/30 text-primary-foreground placeholder:text-primary-foreground/50 text-lg rounded-2xl shadow-[0_0_30px_rgba(255,255,255,0.1)] focus:border-primary-foreground/60 transition-all w-full" 
         />
-        {/* Visible Paste Button positioned inside the right side of the input */}
-        <Button
+        
+        {/* FORCE VISIBLE PASTE BUTTON */}
+        <button
           type="button"
           onClick={handlePaste}
-          className="absolute right-2 h-12 px-4 bg-primary-foreground/20 hover:bg-primary-foreground/30 text-primary-foreground rounded-xl flex items-center gap-2 border border-primary-foreground/10 z-20"
+          style={{ zIndex: 50 }}
+          className="absolute right-3 h-10 px-3 bg-white/20 hover:bg-white/30 text-white rounded-xl flex items-center gap-2 border border-white/20 transition-all active:scale-95 shadow-sm"
         >
-          <ClipboardPaste className="w-4 h-4" />
-          <span className="text-xs font-bold">PASTE</span>
-        </Button>
+          <ClipboardPaste className="w-4 h-4 text-white" />
+          <span className="text-[10px] font-bold tracking-wider text-white">PASTE</span>
+        </button>
       </div>
       
       {/* Submit Button */}
