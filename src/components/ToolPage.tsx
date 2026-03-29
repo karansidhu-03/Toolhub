@@ -1,231 +1,344 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Download, Loader2, AlertCircle, CheckCircle2, ClipboardPaste, Eye, Files } from "lucide-react";
+import { Download, Loader2, AlertCircle, CheckCircle2, ChevronDown, ClipboardPaste, Eye, Files } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import AdBanner from "./AdBanner";
-import { type Tool } from "@/lib/tools";
+import { type Tool, getRelatedTools } from "@/lib/tools";
 import { compressPDF, compressImageFile, formatBytes, mergePDFs, splitPDF, pdfToWord, processBatch } from "@/lib/pdf-engine";
 
-type ToolPageProps = { tool: Tool };
+type ToolPageProps = {
+  tool: Tool;
+};
 
-export default function ToolPage({ tool }: ToolPageProps) {
-  const { title, description, placeholder, icon: Icon, gradient, acceptFile, fileAccept } = tool;
+type ProcessedResult = {
+  name: string;
+  url: string;
+  blob: Blob;
+  oldSize?: number;
+  newSize?: number;
+};
 
+const ToolJsonLd = ({ tool }: { tool: Tool }) => {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": tool.title,
+    "url": `https://toolhub.app/${tool.slug}`,
+    "description": tool.metaDescription,
+    "applicationCategory": "MultimediaApplication",
+    "operatingSystem": "All",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  };
+
+  const faqJsonLd = tool.faqs.length > 0 ? {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": tool.faqs.map((faq) => ({
+      "@type": "Question",
+      "name": faq.q,
+      "acceptedAnswer": { "@type": "Answer", "text": faq.a },
+    })),
+  } : null;
+
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      {faqJsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />}
+    </>
+  );
+};
+
+const ToolPage = ({ tool }: ToolPageProps) => {
+  const { title, description, placeholder, icon: Icon, gradient, acceptFile, fileAccept, faqs, seoContent } = tool;
   const [url, setUrl] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
-  const [results, setResults] = useState<any[]>([]);
+  const [results, setResults] = useState<ProcessedResult[]>([]);
   const [thumbnail, setThumbnail] = useState("");
+  const [canPaste, setCanPaste] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !navigator.clipboard || !navigator.clipboard.readText) {
+      setCanPaste(false);
+    }
+  }, []);
+
+  const relatedTools = getRelatedTools(tool.slug);
 
   const handlePaste = async () => {
     try {
       const text = await navigator.clipboard.readText();
-      setUrl(text);
-    } catch {
-      setErrorMsg("Paste failed");
+      if (!text) throw new Error("Clipboard is empty");
+      setUrl(text.trim());
+      inputRef.current?.focus();
+      setStatus("idle");
+    } catch (err) {
+      setStatus("error");
+      setErrorMsg("Paste blocked. Please press Ctrl+V.");
     }
   };
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // ================= FILE TOOLS =================
     if (acceptFile) {
-      if (!files.length) return;
-
+      if (files.length === 0) {
+        setStatus("error");
+        setErrorMsg("Please select at least one file to continue.");
+        return;
+      }
+      
       setStatus("loading");
+      setErrorMsg("");
       setResults([]);
 
       try {
-        let processed: any[] = [];
+        let processed: ProcessedResult[] = [];
 
         if (tool.slug === "merge-pdf") {
           const blob = await mergePDFs(files);
-          processed = [{
-            name: "merged.pdf",
-            url: URL.createObjectURL(blob),
+          processed = [{ 
+            name: "merged_document.pdf", 
+            url: URL.createObjectURL(blob), 
             blob,
-            oldSize: files.reduce((a, f) => a + f.size, 0),
+            oldSize: files.reduce((acc, f) => acc + f.size, 0),
             newSize: blob.size
           }];
         } else {
           processed = await processBatch(files, async (f) => {
-            if (tool.slug === "compress-pdf") {
-              const res = await compressPDF(f);
-              return { ...res, oldSize: f.size };
-            }
-            if (tool.slug === "image-compressor") {
-              const res = await compressImageFile(f);
-              return { ...res, oldSize: f.size };
-            }
+            if (tool.slug === "compress-pdf") return await compressPDF(f);
+            if (tool.slug === "image-compressor") return await compressImageFile(f);
+            
             if (tool.slug === "pdf-to-word") {
-              return { blob: await pdfToWord(f), name: f.name + ".docx" };
+              const blob = await pdfToWord(f);
+              // Ensure the filename ends with .docx
+              const newName = f.name.replace(/\.[^/.]+$/, "") + ".docx";
+              return { blob, name: newName };
             }
-            if (tool.slug === "split-pdf") {
-              return { blob: await splitPDF(f) };
-            }
+            
+            if (tool.slug === "split-pdf") return { blob: await splitPDF(f) };
+            throw new Error("Tool logic not found.");
           });
         }
 
         setResults(processed);
         setStatus("success");
       } catch (err: any) {
-        setErrorMsg(err.message || "Processing failed");
         setStatus("error");
+        setErrorMsg(err.message || "Failed to process.");
       }
       return;
     }
 
-    // ================= VIDEO =================
-    if (!url) return;
-
+    // URL Downloader Logic (Original Functionality)
+    const cleanInput = url.trim();
+    if (!cleanInput) return;
     setStatus("loading");
+    setErrorMsg("");
 
     try {
-      const controller = new AbortController();
-      setTimeout(() => controller.abort(), 15000);
-
-      const res = await fetch(
-        `https://toolhubworker.karanvirsidhu03.workers.dev?url=${encodeURIComponent(url)}`,
-        { signal: controller.signal }
-      );
-
+      const cleanUrl = cleanInput.split("?")[0].trim();
+      const apiUrl = `https://toolhubworker.karanvirsidhu03.workers.dev?url=${encodeURIComponent(cleanUrl)}`;
+      const res = await fetch(apiUrl);
       const data = await res.json();
-      if (!data.success) throw new Error(data.error);
 
-      const items = [];
-
-      if (data.downloadUrl) {
-        items.push({ name: "Download MP4", url: data.downloadUrl });
+      if (data.success && data.downloadUrl) {
+        setResults([{ name: "download", url: data.downloadUrl, blob: new Blob() }]);
+        if (data.thumbnail) {
+          const workerBase = "https://toolhubworker.karanvirsidhu03.workers.dev";
+          setThumbnail(`${workerBase}/proxy-image?img=${encodeURIComponent(data.thumbnail)}`);
+        }
+        setStatus("success");
+      } else {
+        setStatus("error");
+        setErrorMsg(data.error || "Failed to fetch download link");
       }
-      if (data.audioUrl) {
-        items.push({ name: "Download MP3", url: data.audioUrl });
-      }
-
-      setResults(items);
-      setThumbnail(data.thumbnail || "");
-      setStatus("success");
-    } catch (err: any) {
-      setErrorMsg(err.name === "AbortError" ? "Timeout, try again" : err.message);
+    } catch {
       setStatus("error");
+      setErrorMsg("Network error. Please try again.");
     }
   };
 
   return (
     <div className="min-h-[80vh]">
-      <section className={`relative py-20 ${gradient}`}>
-        <div className="max-w-2xl mx-auto px-4 text-center">
+      <ToolJsonLd tool={tool} />
 
-          <div className="mb-6 flex justify-center">
-            <Icon className="w-10 h-10 text-white" />
-          </div>
-
-          <h1 className="text-4xl font-bold text-white mb-4">{title}</h1>
-          <p className="text-white/80 mb-8">{description}</p>
-
-          {/* FORM */}
-          <form onSubmit={handleSubmit} className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl border border-white/20">
-
-            {acceptFile ? (
-              <input
-                type="file"
-                multiple
-                accept={fileAccept}
-                className="w-full text-white"
-                onChange={(e) => setFiles(Array.from(e.target.files || []))}
-              />
-            ) : (
-              <div className="flex gap-2">
-                <Input
-                  ref={inputRef}
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  placeholder={placeholder}
-                  className="h-14 text-lg"
-                />
-                <Button type="button" onClick={handlePaste}>
-                  <ClipboardPaste />
-                </Button>
-              </div>
-            )}
-
-            <Button className="mt-4 w-full h-14 text-lg font-bold">
-              {status === "loading" ? <Loader2 className="animate-spin" /> : "Download"}
-            </Button>
-          </form>
-
-          {/* AD */}
-          <div className="mt-6 flex justify-center">
-            <AdBanner adKey="2bc0fd71dd9ccc822fa5e4090e0d961e" width={300} height={250} />
-          </div>
-
-          {/* ERROR */}
-          {status === "error" && (
-            <div className="mt-4 text-red-300 flex items-center justify-center gap-2">
-              <AlertCircle size={16} /> {errorMsg}
+      <section className={`relative overflow-hidden py-16 md:py-24 ${gradient}`}>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.1),transparent_50%)]" />
+        <div className="container mx-auto px-4 relative z-10">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl mx-auto text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-card/20 backdrop-blur-sm mb-6">
+              <Icon className="h-8 w-8 text-primary-foreground" />
             </div>
-          )}
+            <h1 className="font-display text-3xl md:text-5xl font-bold text-primary-foreground mb-4">{title}</h1>
+            <p className="text-primary-foreground/80 text-lg mb-8">{description}</p>
 
-          {/* SUCCESS */}
-          {status === "success" && (
-            <motion.div className="mt-6 space-y-4">
-
-              <div className="text-green-300 flex flex-col items-center">
-                <CheckCircle2 size={24} />
-                <span className="font-semibold">Success</span>
-              </div>
-
-              {thumbnail && <img src={thumbnail} className="rounded-lg mx-auto max-w-sm" />}
-
-              {results.map((r, i) => (
-                <div key={i} className="bg-white/10 backdrop-blur-md p-4 rounded-xl flex justify-between items-center">
-
-                  <div className="text-left">
-                    <p className="text-white font-medium">{r.name}</p>
-
-                    {r.oldSize && r.newSize && (
-                      <p className="text-green-300 text-xs">
-                        Saved {Math.round(((r.oldSize - r.newSize) / r.oldSize) * 100)}% ({formatBytes(r.newSize)})
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Button size="icon" onClick={() => window.open(r.url)}>
-                      <Eye />
+            <form onSubmit={handleSubmit} className="max-w-xl mx-auto">
+              {acceptFile ? (
+                <div className="bg-card/20 backdrop-blur-sm rounded-2xl p-8 border border-primary-foreground/10">
+                  <label className="flex flex-col items-center gap-4 cursor-pointer">
+                    <div className="w-20 h-20 rounded-full bg-card/20 flex items-center justify-center">
+                      <Files className="w-8 h-8 text-primary-foreground" />
+                    </div>
+                    <span className="text-primary-foreground font-medium">
+                      {files.length > 0 ? `${files.length} files selected` : "Click to upload multiple files"}
+                    </span>
+                    <input 
+                      type="file" 
+                      accept={fileAccept} 
+                      multiple={tool.slug !== "split-pdf"} 
+                      className="hidden" 
+                      onChange={(e) => {
+                        setFiles(Array.from(e.target.files || []));
+                        setStatus("idle");
+                      }} 
+                    />
+                  </label>
+                  <Button type="submit" disabled={files.length === 0 || status === "loading"} size="lg" className="mt-6 w-full bg-card text-foreground hover:bg-card/90 font-semibold">
+                    {status === "loading" ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...</> : <><Download className="mr-2 h-4 w-4" /> Process Files</>}
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-col sm:flex-row items-center gap-2 w-full">
+                    <div className="relative flex-1 w-full">
+                      <Input 
+                        ref={inputRef}
+                        value={url} 
+                        onChange={(e) => { setUrl(e.target.value); setStatus("idle"); }} 
+                        placeholder={placeholder} 
+                        className="h-16 pr-28 bg-card/20 backdrop-blur-md border-2 border-primary-foreground/30 text-primary-foreground placeholder:text-primary-foreground/50 text-lg rounded-2xl w-full" 
+                      />
+                      <button type="button" onClick={handlePaste} disabled={!canPaste} className="absolute right-2 top-1/2 -translate-y-1/2 h-12 px-4 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl flex items-center gap-2 transition-all">
+                        <ClipboardPaste className="w-4 h-4" />
+                        <span className="text-xs font-bold">{canPaste ? "PASTE" : "N/A"}</span>
+                      </button>
+                    </div>
+                    <Button type="submit" disabled={!url.trim() || status === "loading"} className="h-16 px-10 bg-card text-foreground hover:bg-card/90 font-bold text-lg rounded-2xl shrink-0">
+                      {status === "loading" ? <Loader2 className="h-5 w-5 animate-spin" /> : <Download className="h-5 w-5" />}
                     </Button>
-
-                    <a
-                      href="https://fortunateambiguous.com/c275tpt4?key=3525ba08264f6d29e507b16c38e44591"
-                      target="_blank"
-                      onClick={() => setTimeout(() => window.open(r.url), 800)}
-                    >
-                      <Button size="icon">
-                        <Download />
-                      </Button>
-                    </a>
                   </div>
                 </div>
-              ))}
-            </motion.div>
-          )}
+              )}
+            </form>
 
-          {/* MOBILE AD */}
-          <AdBanner adKey="c1fb6e002cfa88054dace1dc2d7a964d" width={320} height={50} />
+            {status === "error" && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-4 flex items-center justify-center gap-2 text-red-200">
+                <AlertCircle className="h-4 w-4" />
+                <span className="text-sm">{errorMsg}</span>
+              </motion.div>
+            )}
 
+            {status === "success" && results.length > 0 && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-6 space-y-4">
+                 <div className="flex flex-col items-center gap-2 text-green-200">
+                    <CheckCircle2 className="h-6 w-6" />
+                    <span className="font-medium text-xl">Success!</span>
+                 </div>
+
+                 {thumbnail && <img src={thumbnail} alt="Preview" className="w-full max-w-sm mx-auto rounded-lg shadow-lg mb-4" referrerPolicy="no-referrer" crossOrigin="anonymous" />}
+                 
+                 <div className="max-w-xl mx-auto space-y-3">
+                    {results.map((res, i) => (
+                      <div key={i} className="bg-card/30 backdrop-blur-md rounded-xl p-4 border border-primary-foreground/10 flex items-center justify-between">
+                        <div className="text-left overflow-hidden pr-4">
+                          <p className="text-primary-foreground font-medium truncate text-sm">{res.name}</p>
+                          {res.oldSize && res.newSize && res.oldSize > res.newSize && (
+                            <p className="text-xs text-green-300">
+                              Saved {Math.round(((res.oldSize - res.newSize) / res.oldSize) * 100)}% ({formatBytes(res.newSize)})
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex gap-2">
+                           <Button size="icon" variant="ghost" className="text-primary-foreground hover:bg-white/10" onClick={() => window.open(res.url, '_blank')}>
+                              <Eye className="w-4 h-4" />
+                           </Button>
+                           <a href={res.url} download={res.name} className="bg-card text-foreground px-4 py-2 rounded-lg text-xs font-bold hover:scale-105 transition-transform no-underline">
+                              DOWNLOAD
+                           </a>
+                        </div>
+                      </div>
+                    ))}
+                 </div>
+                 <div className="w-full flex justify-center py-2"><AdBanner /></div>
+              </motion.div>
+            )}
+          </motion.div>
         </div>
       </section>
 
-      <div className="flex justify-center my-8">
-        <AdBanner adKey="bea0808c433ba62644f402ac70f08391" width={728} height={90} />
-      </div>
+      <AdBanner className="container mx-auto px-4 rounded-lg" />
 
-      <div className="flex justify-center my-8">
-        <AdBanner adKey="5a377b4924aaffb1918162b4d2ca513f" width={468} height={60} />
-      </div>
+      <section className="container mx-auto px-4 py-16 text-center">
+        <h2 className="font-display text-2xl font-bold mb-10">How It Works</h2>
+        <div className="grid md:grid-cols-3 gap-8 max-w-3xl mx-auto">
+          {[
+            { step: "1", title: acceptFile ? "Upload Files" : "Paste Link", desc: "Select your content" },
+            { step: "2", title: "Process", desc: "Fast cloud-based processing" },
+            { step: "3", title: "Download", desc: "Save your results" },
+          ].map((s) => (
+            <div key={s.step}>
+              <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center mx-auto mb-4 text-primary-foreground font-bold">{s.step}</div>
+              <h3 className="font-semibold mb-2">{s.title}</h3>
+              <p className="text-sm text-muted-foreground">{s.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {seoContent && (
+        <section className="container mx-auto px-4 pb-16">
+          <div className="max-w-3xl mx-auto bg-card rounded-2xl border border-border p-8">
+            <h2 className="font-display text-xl font-bold mb-4">{title}</h2>
+            <div className="text-sm text-muted-foreground space-y-3">
+              {seoContent.split("\n\n").map((paragraph, i) => <p key={i}>{paragraph}</p>)}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {faqs.length > 0 && (
+        <section className="container mx-auto px-4 pb-16">
+          <h2 className="font-display text-2xl font-bold text-center mb-8">Frequently Asked Questions</h2>
+          <div className="max-w-2xl mx-auto space-y-3">
+            {faqs.map((faq, i) => (
+              <Collapsible key={i}>
+                <CollapsibleTrigger className="flex items-center justify-between w-full bg-card rounded-xl p-4 border border-border text-left group">
+                  <span className="font-medium text-sm">{faq.q}</span>
+                  <ChevronDown className="h-4 w-4 group-data-[state=open]:rotate-180 transition-transform" />
+                </CollapsibleTrigger>
+                <CollapsibleContent className="px-4 pb-4 pt-2 text-sm text-muted-foreground">{faq.a}</CollapsibleContent>
+              </Collapsible>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <AdBanner className="container mx-auto px-4 rounded-lg" />
+
+      {relatedTools.length > 0 && (
+        <section className="container mx-auto px-4 pb-16">
+          <h2 className="font-display text-2xl font-bold text-center mb-8">Try Other Tools</h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl mx-auto">
+            {relatedTools.map((rt) => (
+              <Link key={rt.slug} to={`/${rt.slug}`} className="group block bg-card rounded-xl p-5 border border-border hover:border-primary/30 transition-all">
+                <div className={`inline-flex items-center justify-center w-9 h-9 rounded-lg ${rt.gradient} text-primary-foreground mb-3`}>
+                  <rt.icon className="h-4 w-4" />
+                </div>
+                <h3 className="font-display text-sm font-semibold mb-1">{rt.title}</h3>
+                <p className="text-xs text-muted-foreground line-clamp-2">{rt.description}</p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
-}
+};
+
+export default ToolPage;
