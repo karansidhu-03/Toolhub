@@ -1,13 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Download, Loader2, AlertCircle, CheckCircle2, ChevronDown, ClipboardPaste } from "lucide-react";
+import { Download, Loader2, AlertCircle, CheckCircle2, ChevronDown, ClipboardPaste, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import AdBanner from "./AdBanner";
 import { type Tool, getRelatedTools } from "@/lib/tools";
-import { compressPDF, compressImageFile } from "@/lib/pdf-engine";
+import { compressPDF, compressImageFile, formatBytes } from "@/lib/pdf-engine";
 
 type ToolPageProps = {
   tool: Tool;
@@ -52,63 +52,37 @@ const ToolPage = ({ tool }: ToolPageProps) => {
   const [downloadUrl, setDownloadUrl] = useState("");
   const [thumbnail, setThumbnail] = useState("");
   const [canPaste, setCanPaste] = useState(true);
+  const [stats, setStats] = useState<{ old: number; new: number } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
- if (typeof navigator === "undefined" || !navigator.clipboard || !navigator.clipboard.readText) {
-    setCanPaste(false);
-  }
-}, []);
+    if (typeof navigator === "undefined" || !navigator.clipboard || !navigator.clipboard.readText) {
+      setCanPaste(false);
+    }
+  }, []);
 
   const relatedTools = getRelatedTools(tool.slug);
 
- const handlePaste = async () => {
-  try {
-    if (typeof navigator === "undefined" || !navigator.clipboard || !navigator.clipboard.readText) {
-      throw new Error("Clipboard API not supported");
-    }
-
-    if (navigator.permissions) {
-      try {
-        const permission = await navigator.permissions.query({
-          name: "clipboard-read" as PermissionName,
-        });
-
-        if (permission.state === "denied") {
-          throw new Error("Clipboard permission denied");
-        }
-      } catch {
-        // ignore if not supported
+  const handlePaste = async () => {
+    try {
+      if (typeof navigator === "undefined" || !navigator.clipboard || !navigator.clipboard.readText) {
+        throw new Error("Clipboard API not supported");
       }
+      const text = await navigator.clipboard.readText();
+      if (!text) throw new Error("Clipboard is empty");
+      setUrl(text.trim());
+      inputRef.current?.focus();
+      setStatus("idle");
+    } catch (err) {
+      console.error("Paste failed:", err);
+      setStatus("error");
+      setErrorMsg("Paste blocked. Please press Ctrl+V.");
     }
+  };
 
-    const text = await navigator.clipboard.readText();
-
-    if (!text) {
-      throw new Error("Clipboard is empty");
-    }
-
-    setUrl(text.trim());
-
-    // ✅ safe focus
-    if (inputRef.current) {
-      inputRef.current.focus();
-    } else {
-      const inputEl = document.querySelector("input");
-      inputEl?.focus();
-    }
-
-    setStatus("idle");
-
-  } catch (err) {
-    console.error("Paste failed:", err);
-    setStatus("error");
-    setErrorMsg("Paste blocked. Please press Ctrl+V (or Cmd+V on Mac).");
-  }
-};
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // --- BRANCH A: FILE TOOLS (PDF & IMAGE) ---
     if (acceptFile) {
       if (!file) {
         setStatus("error");
@@ -118,37 +92,28 @@ const ToolPage = ({ tool }: ToolPageProps) => {
       
       setStatus("loading");
       setErrorMsg("");
+      setStats(null);
 
       try {
-        let processedBlob: Blob;
-
-        // Route to the correct engine based on the tool's slug
+        let result;
         if (tool.slug === "compress-pdf") {
-          processedBlob = await compressPDF(file);
+          result = await compressPDF(file);
         } else if (tool.slug === "image-compressor") {
-          const compressedFile = await compressImageFile(file);
-          processedBlob = new Blob([compressedFile], { type: compressedFile.type });
+          result = await compressImageFile(file);
         } else {
-          // Fallback for tools we haven't linked yet (like Merge/Split)
-          throw new Error("This tool engine is currently being updated. Please try again later.");
+          throw new Error("This tool engine is currently being updated.");
         }
 
-        // Create the local download link
-        const localUrl = URL.createObjectURL(processedBlob);
-        
-        // Update state to show the success UI and download button
-        setDownloadUrl(localUrl);
+        setStats({ old: result.oldSize, new: result.newSize });
+        setDownloadUrl(URL.createObjectURL(result.blob));
         setStatus("success");
-
       } catch (err: any) {
-        console.error("Processing error:", err);
         setStatus("error");
-        setErrorMsg(err.message || "Failed to process the file. Please try a different one.");
+        setErrorMsg(err.message || "Failed to process the file.");
       }
-      return; // Exit here so it doesn't run the URL logic below
+      return;
     }
 
-    // --- BRANCH B: URL DOWNLOADERS (INSTAGRAM, TIKTOK, YOUTUBE) ---
     const cleanInput = url.trim();
     if (!cleanInput) return;
     if (!cleanInput.startsWith("http")) {
@@ -209,52 +174,46 @@ const ToolPage = ({ tool }: ToolPageProps) => {
                     <span className="text-primary-foreground font-medium">
                       {file ? file.name : "Click to upload or drag and drop"}
                     </span>
-                    <input type="file" accept={fileAccept} className="hidden" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+                    <input type="file" accept={fileAccept} className="hidden" onChange={(e) => {
+                      setFile(e.target.files?.[0] || null);
+                      setStatus("idle");
+                    }} />
                   </label>
                   <Button type="submit" disabled={!file || status === "loading"} size="lg" className="mt-6 w-full bg-card text-foreground hover:bg-card/90 font-semibold">
                     {status === "loading" ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...</> : <><Download className="mr-2 h-4 w-4" /> Process File</>}
                   </Button>
                 </div>
-            ) : (
-  <div className="flex flex-col gap-4">
-  <div className="flex flex-col sm:flex-row items-center gap-2 w-full">
-
-    {/* Input with Paste inside */}
-    <div className="relative flex-1 w-full">
-      <Input 
-        ref={inputRef}
-        value={url} 
-        onChange={(e) => { setUrl(e.target.value); setStatus("idle"); }} 
-        placeholder={placeholder} 
-        className="h-16 pr-28 bg-card/20 backdrop-blur-md border-2 border-primary-foreground/30 text-primary-foreground placeholder:text-primary-foreground/50 text-lg rounded-2xl shadow-[0_0_30px_rgba(255,255,255,0.1)] focus:border-primary-foreground/60 transition-all w-full" 
-      />
-
-      {/* ✅ Paste button INSIDE input */}
-      <button
-        type="button"
-        onClick={handlePaste}
-        disabled={!canPaste}
-        className="absolute right-2 top-1/2 -translate-y-1/2 h-12 px-4 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl flex items-center gap-2 transition-all active:scale-95"
-      >
-        <ClipboardPaste className="w-4 h-4" />
-        <span className="text-xs font-bold">
-          {canPaste ? "PASTE" : "N/A"}
-        </span>
-      </button>
-    </div>
-
-    {/* Download button */}
-    <Button 
-      type="submit" 
-      disabled={!url.trim() || status === "loading"} 
-      className="h-16 px-10 bg-card text-foreground hover:bg-card/90 font-bold text-lg rounded-2xl shrink-0"
-    >
-      {status === "loading" ? <Loader2 className="h-5 w-5 animate-spin" /> : <Download className="h-5 w-5" />}
-    </Button>
-
-  </div>
-</div>
-)}
+              ) : (
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-col sm:flex-row items-center gap-2 w-full">
+                    <div className="relative flex-1 w-full">
+                      <Input 
+                        ref={inputRef}
+                        value={url} 
+                        onChange={(e) => { setUrl(e.target.value); setStatus("idle"); }} 
+                        placeholder={placeholder} 
+                        className="h-16 pr-28 bg-card/20 backdrop-blur-md border-2 border-primary-foreground/30 text-primary-foreground placeholder:text-primary-foreground/50 text-lg rounded-2xl shadow-[0_0_30px_rgba(255,255,255,0.1)] focus:border-primary-foreground/60 transition-all w-full" 
+                      />
+                      <button
+                        type="button"
+                        onClick={handlePaste}
+                        disabled={!canPaste}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 h-12 px-4 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl flex items-center gap-2 transition-all active:scale-95"
+                      >
+                        <ClipboardPaste className="w-4 h-4" />
+                        <span className="text-xs font-bold">{canPaste ? "PASTE" : "N/A"}</span>
+                      </button>
+                    </div>
+                    <Button 
+                      type="submit" 
+                      disabled={!url.trim() || status === "loading"} 
+                      className="h-16 px-10 bg-card text-foreground hover:bg-card/90 font-bold text-lg rounded-2xl shrink-0"
+                    >
+                      {status === "loading" ? <Loader2 className="h-5 w-5 animate-spin" /> : <Download className="h-5 w-5" />}
+                    </Button>
+                  </div>
+                </div>
+              )}
             </form>
 
             {status === "error" && (
@@ -268,14 +227,35 @@ const ToolPage = ({ tool }: ToolPageProps) => {
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-6 bg-card/20 backdrop-blur-sm rounded-xl p-6 border border-primary-foreground/10">
                 <div className="flex flex-col items-center gap-4">
                   {thumbnail && <img src={thumbnail} alt="Preview" className="w-full max-w-sm rounded-lg shadow-lg" referrerPolicy="no-referrer" crossOrigin="anonymous" />}
-                  <div className="flex items-center justify-center gap-2 text-green-200">
-                    <CheckCircle2 className="h-5 w-5" />
-                    <span className="font-medium">Ready to download!</span>
+                  
+                  <div className="flex flex-col items-center gap-1">
+                    <div className="flex items-center justify-center gap-2 text-green-200">
+                      <CheckCircle2 className="h-5 w-5" />
+                      <span className="font-medium text-lg">Processing Complete!</span>
+                    </div>
+                    {stats && (
+                      <div className="text-primary-foreground/90 text-sm mt-1">
+                        Saved <span className="text-green-300 font-bold">{Math.round(((stats.old - stats.new) / stats.old) * 100)}%</span> 
+                        {" "}({formatBytes(stats.old)} → {formatBytes(stats.new)})
+                      </div>
+                    )}
                   </div>
+
                   <div className="w-full flex justify-center py-2"><AdBanner /></div>
-                  <a href={downloadUrl} target="_self" className="inline-flex items-center justify-center w-full max-w-sm h-14 bg-card text-foreground hover:bg-card/90 font-bold text-lg rounded-xl shadow-lg no-underline">
-                    <Download className="mr-2 h-5 w-5" /> Download Now
-                  </a>
+                  
+                  <div className="flex flex-col sm:flex-row gap-3 w-full max-w-sm">
+                    <a href={downloadUrl} download={file?.name || "download"} className="flex-1 inline-flex items-center justify-center h-14 bg-card text-foreground hover:bg-card/90 font-bold text-lg rounded-xl shadow-lg no-underline transition-transform active:scale-95">
+                      <Download className="mr-2 h-5 w-5" /> Download
+                    </a>
+                    {acceptFile && (
+                      <button 
+                        onClick={() => window.open(downloadUrl, '_blank')}
+                        className="inline-flex items-center justify-center h-14 px-6 bg-white/10 text-white border border-white/20 hover:bg-white/20 font-bold rounded-xl transition-all"
+                      >
+                        <Eye className="h-5 w-5" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </motion.div>
             )}
@@ -285,6 +265,7 @@ const ToolPage = ({ tool }: ToolPageProps) => {
 
       <AdBanner className="container mx-auto px-4 rounded-lg" />
 
+      {/* Keep the rest of your SEO/FAQ sections exactly as they were */}
       <section className="container mx-auto px-4 py-16">
         <h2 className="font-display text-2xl font-bold text-center mb-10">How It Works</h2>
         <div className="grid md:grid-cols-3 gap-8 max-w-3xl mx-auto">
