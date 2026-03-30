@@ -224,33 +224,35 @@ const ToolPage = ({ tool }: ToolPageProps) => {
     if (!cleanInput) return;
     setStatus("loading");
     setErrorMsg("");
+    setResults([]);     // ✅ clear previous outputs
+    setThumbnail("");   // ✅ clear previous preview
 
-    try {try {
-  const apiUrl = `https://toolhubworker.karanvirsidhu03.workers.dev?url=${encodeURIComponent(cleanInput)}`;
-
-  const res = await fetch(apiUrl);
-
-  // Always read as text first (prevents hidden JSON/network issues)
-  const text = await res.text();
-
-  let data;
-  try {
+    try {
+        const apiUrl = `https://toolhubworker.karanvirsidhu03.workers.dev?url=${encodeURIComponent(cleanInput)}`;
+      
+        const res = await fetch(apiUrl);
+      
+        // Always read as text first (prevents hidden JSON/network issues)
+        const text = await res.text();
+      
+        let data;
+          try {
               data = JSON.parse(text);
             } catch {
               throw new Error("Invalid response from server");
             }
           
-            if (!res.ok) {
+        if (!res.ok) {
               throw new Error(data?.error || "Server error");
             }
           
-            if (!data.success) {
+        if (!data.success) {
               throw new Error(data?.error || "Download not available");
             }
           
-            const items: ProcessedResult[] = [];
+        const items: ProcessedResult[] = [];
           
-            if (data.downloadUrl) {
+        if (data.downloadUrl && data.downloadUrl.startsWith("http")) {
               items.push({
                 name: "Download Video",
                 url: data.downloadUrl,
@@ -258,7 +260,7 @@ const ToolPage = ({ tool }: ToolPageProps) => {
               });
             }
           
-            if (data.audioUrl) {
+        if (data.audioUrl && data.audioUrl.startsWith("http")) {
               items.push({
                 name: "Download Audio",
                 url: data.audioUrl,
@@ -266,13 +268,13 @@ const ToolPage = ({ tool }: ToolPageProps) => {
               });
             }
           
-            if (items.length === 0) {
+        if (items.length === 0) {
               throw new Error("No downloadable content found");
             }
           
-            setResults(items);
+        setResults(items);
           
-            if (data.thumbnail) {
+        if (data.thumbnail) {
               const workerBase = "https://toolhubworker.karanvirsidhu03.workers.dev";
               setThumbnail(`${workerBase}/proxy-image?img=${encodeURIComponent(data.thumbnail)}`);
             }
@@ -282,9 +284,8 @@ const ToolPage = ({ tool }: ToolPageProps) => {
           } catch (err: any) {
             console.error("Download error:", err);
             setStatus("error");
-            setErrorMsg(err.message || "Download failed");
-        } 
-    };
+            setErrorMsg(err.message || "Download failed"); 
+      };
 
   return (
     <div className="min-h-[80vh]">
