@@ -286,7 +286,7 @@ const ToolPage = ({ tool }: ToolPageProps) => {
             setStatus("error");
             setErrorMsg(err.message || "Download failed"); 
       }
-
+};
   return (
     <div className="min-h-[80vh]">
       <ToolJsonLd tool={tool} />
