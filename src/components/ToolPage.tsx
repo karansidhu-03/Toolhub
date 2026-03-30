@@ -142,7 +142,7 @@ const ToolPage = ({ tool }: ToolPageProps) => {
     setErrorMsg("");
 
     try {
-      const cleanUrl = cleanInput.split("?")[0].trim();
+      const cleanUrl = cleanInput;
       const apiUrl = `https://toolhubworker.karanvirsidhu03.workers.dev?url=${encodeURIComponent(cleanUrl)}`;
       const res = await fetch(apiUrl);
       const data = await res.json();
