@@ -230,7 +230,13 @@ const ToolPage = ({ tool }: ToolPageProps) => {
     try {
         const apiUrl = `https://toolhubworker.karanvirsidhu03.workers.dev?url=${encodeURIComponent(cleanInput)}`;
       
-        const res = await fetch(apiUrl);
+        const res = await fetch(apiUrl, {
+                      method: 'GET',
+                      mode: 'cors', // Explicitly ask for CORS
+                      headers: {
+                        'Accept': 'application/json',
+                      },
+                    });
       
         // Always read as text first (prevents hidden JSON/network issues)
         const text = await res.text();
@@ -242,13 +248,9 @@ const ToolPage = ({ tool }: ToolPageProps) => {
               throw new Error("Invalid response from server");
             }
           
-        if (!res.ok) {
-              throw new Error(data?.error || "Server error");
-            }
-          
-        if (!data.success) {
-              throw new Error(data?.error || "Download not available");
-            }
+        if (!res.ok || !data.success) {
+                throw new Error(data?.error || "Download not available at this moment.");
+              }
           
         const items: ProcessedResult[] = [];
           
@@ -282,10 +284,11 @@ const ToolPage = ({ tool }: ToolPageProps) => {
             setStatus("success");
           
           } catch (err: any) {
-            console.error("Download error:", err);
-            setStatus("error");
-            setErrorMsg(err.message || "Download failed"); 
-      }
+            console.error("Detailed Error:", err);
+              setStatus("error");
+              // This will now show the actual error instead of a generic network message
+              setErrorMsg(err.name === 'TypeError' ? "Network/CORS Error: Check Worker Logs" : err.message);
+            }
 };
   return (
     <div className="min-h-[80vh]">
