@@ -61,52 +61,54 @@ const ToolPage = ({ tool }: ToolPageProps) => {
   const [thumbnail, setThumbnail] = useState("");
   const [canPaste, setCanPaste] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [imageFormat, setImageFormat] = useState("image/jpeg");
+  const [resizeWidth, setResizeWidth] = useState(800);
 
   useEffect(() => {
-  if (!navigator?.clipboard?.readText) {
-    setCanPaste(false);
-  }
-}, []);
-  
+          if (!navigator?.clipboard?.readText) {
+            setCanPaste(false);
+          }
+        }, []);
+          
   useEffect(() => {
-  return () => {
-    results.forEach(r => {
-      if (r.url.startsWith("blob:")) {
-        URL.revokeObjectURL(r.url);
-      }
-    });
-  };
-}, [results]);
+          return () => {
+            results.forEach(r => {
+              if (r.url.startsWith("blob:")) {
+                URL.revokeObjectURL(r.url);
+              }
+            });
+          };
+        }, [results]);
 
   const relatedTools = getRelatedTools(tool.slug);
 
   const handlePaste = async () => {
     try {
-      const text = await navigator.clipboard.readText();
-      if (!text) throw new Error("Clipboard is empty");
-      setUrl(text.trim());
-if (inputRef.current) inputRef.current.focus(); // ADD THE "IF" CHECK
-setStatus("idle");
-    } catch (err) {
-      setStatus("error");
-      setErrorMsg("Paste blocked. Use Ctrl+V / Cmd+V.");
-    }
-  };
+          const text = await navigator.clipboard.readText();
+          if (!text) throw new Error("Clipboard is empty");
+          setUrl(text.trim());
+          if (inputRef.current) inputRef.current.focus(); // ADD THE "IF" CHECK
+          setStatus("idle");
+            } 
+    catch (err) {
+                setStatus("error");
+                setErrorMsg("Paste blocked. Use Ctrl+V / Cmd+V.");
+                }
+      };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (acceptFile) {
-      if (files.length === 0) {
-        setStatus("error");
-        setErrorMsg("Please select at least one file to continue.");
-        return;
-      }
-      results.forEach(r => {
-      if (r.url && r.url.startsWith("blob:")) {
-        URL.revokeObjectURL(r.url);
-      }
-    });
+        e.preventDefault();
+        if (acceptFile) {
+              if (files.length === 0) {
+              setStatus("error");
+              setErrorMsg("Please select at least one file to continue.");
+              return;
+              }
+            results.forEach(r => {
+                if (r.url && r.url.startsWith("blob:")) {
+                URL.revokeObjectURL(r.url);
+                }
+              });
       
       setStatus("loading");
       setErrorMsg("");
@@ -127,43 +129,84 @@ setStatus("idle");
         } else {
           processed = await processBatch(files, async (f) => {
             if (tool.slug === "compress-pdf") {
-  const blob = await compressPDF(f);
-  return {
-    blob,
-    name: f.name,
-    url: URL.createObjectURL(blob),
-    oldSize: f.size,
-    newSize: blob.size
-  };
-}
+                          const blob = await compressPDF(f);
+                                      
+                          return {
+                            blob,
+                            name: f.name,
+                            url: URL.createObjectURL(blob),
+                            oldSize: f.size,
+                            newSize: blob.size
+                          };
+                        }
             if (tool.slug === "image-compressor") {
-  const result = await compressImageFile(f);
-  return {
-    ...result,
-    url: URL.createObjectURL(result.blob),
-    oldSize: f.size,
-    newSize: result.blob.size
-  };
-}
+                          const result = await compressImageFile(f);
+                        
+                          return {
+                            ...result,
+                            url: URL.createObjectURL(result.blob),
+                            oldSize: f.size,
+                            newSize: result.blob.size
+                          };
+                        }  
+            
+            if (tool.slug === "image-resize" || tool.slug === "image-convert") {
+                        const img = new Image();
+                        const tempUrl = URL.createObjectURL(f);
+                      
+                        await new Promise((resolve) => {
+                          img.onload = resolve;
+                          img.src = tempUrl;
+                        });
+                      
+                        const canvas = document.createElement("canvas");
+                        const ctx = canvas.getContext("2d");
+                      
+                        const width = tool.slug === "image-resize" ? resizeWidth : img.width;
+                        const height = (img.height / img.width) * width;
+                      
+                        canvas.width = width;
+                        canvas.height = height;
+                      
+                        ctx?.drawImage(img, 0, 0, width, height);
+                      
+                        const blob: Blob = await new Promise((resolve, reject) => {
+                                    canvas.toBlob((b) => {
+                                      if (!b) return reject(new Error("Image processing failed"));
+                                      resolve(b);
+                                    }, imageFormat, 0.8);
+                                  });
+                      
+                        URL.revokeObjectURL(tempUrl);
+                      
+                        const ext = imageFormat.split("/")[1];
+                      
+                        return {
+                          blob,
+                          name: f.name.replace(/\.[^/.]+$/, `.${ext}`),
+                          url: URL.createObjectURL(blob),
+                          oldSize: f.size,
+                          newSize: blob.size
+                        };
+                      }
             
             if (tool.slug === "pdf-to-word") {
-  const blob = await pdfToWord(f);
-  const newName = f.name.replace(/\.[^/.]+$/, "") + ".docx";
-  return { 
-    blob, 
-    name: newName, 
-    url: URL.createObjectURL(blob) // ADD THIS LINE
-  };
-}
-            
+            const blob = await pdfToWord(f);
+            const newName = f.name.replace(/\.[^/.]+$/, "") + ".docx";
+            return { 
+              blob, 
+              name: newName, 
+              url: URL.createObjectURL(blob) // ADD THIS LINE
+              };
+            }
             if (tool.slug === "split-pdf") {
-  const blob = await splitPDF(f);
-  return {
-    blob,
-    name: f.name.replace(/\.[^/.]+$/, "_split.pdf"),
-    url: URL.createObjectURL(blob)
-  };
-}
+            const blob = await splitPDF(f);
+            return {
+              blob,
+              name: f.name.replace(/\.[^/.]+$/, "_split.pdf"),
+              url: URL.createObjectURL(blob)
+            };
+          }
             throw new Error("Tool logic not found.");
           });
         }
@@ -172,7 +215,7 @@ setStatus("idle");
       } catch (err: any) {
         setStatus("error");
         setErrorMsg(err.message || "Failed to process.");
-      }
+        }
       return;
     }
 
@@ -251,6 +294,30 @@ setStatus("idle");
 }}
                     />
                   </label>
+                      {tool.slug.includes("image") && (
+                          <div className="mt-4 flex flex-col gap-3">
+                            {/* FORMAT SELECT */}
+                            <select
+                              value={imageFormat}
+                              onChange={(e) => setImageFormat(e.target.value)}
+                              className="p-2 rounded-lg bg-white/10 text-white"
+                            >
+                              <option value="image/jpeg">JPG</option>
+                              <option value="image/png">PNG</option>
+                              <option value="image/webp">WEBP</option>
+                            </select>
+                            {/* RESIZE INPUT */}
+                            {tool.slug === "image-resize" && (
+                              <input
+                                type="number"
+                                placeholder="Width (px)"
+                                value={resizeWidth}
+                                onChange={(e) => setResizeWidth(Math.max(50, Number(e.target.value)))}
+                                className="p-2 rounded-lg bg-white/10 text-white"
+                              />
+                            )}
+                          </div>
+                        )}
                   <Button type="submit" disabled={files.length === 0 || status === "loading"} size="lg" className="mt-6 w-full bg-card text-foreground hover:bg-card/90 font-semibold">
                     {status === "loading" ? (
                     <>
@@ -310,11 +377,13 @@ setStatus("idle");
                       <div key={i} className="bg-card/30 backdrop-blur-md rounded-xl p-4 border border-primary-foreground/10 flex items-center justify-between">
                         <div className="text-left overflow-hidden pr-4">
                           <p className="text-primary-foreground font-medium truncate text-sm">{res.name}</p>
-                          {res.oldSize && res.newSize && res.oldSize > res.newSize && (
-                            <p className="text-xs text-green-300">
-                              Saved {Math.round(((res.oldSize - res.newSize) / res.oldSize) * 100)}% ({formatBytes(res.newSize)})
-                            </p>
-                          )}
+                          {res.oldSize && res.newSize && (
+  <p className="text-xs text-green-300">
+    {res.newSize < res.oldSize
+      ? `Saved ${Math.round(((res.oldSize - res.newSize) / res.oldSize) * 100)}% (${formatBytes(res.newSize)})`
+      : `Processed (${formatBytes(res.newSize)})`}
+  </p>
+)}
                         </div>
                         <div className="flex gap-2">
                            <Button size="icon" variant="ghost" className="text-primary-foreground hover:bg-white/10" onClick={() => window.open(res.url, '_blank')}>
