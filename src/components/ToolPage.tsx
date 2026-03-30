@@ -249,19 +249,27 @@ const ToolPage = ({ tool }: ToolPageProps) => {
           
             const items: ProcessedResult[] = [];
           
-            if (data.downloadUrl?.startsWith("http")) {
-              items.push({
-                name: "Download Video",
-                url: data.downloadUrl,
-                blob: new Blob()
-              });
-            }
+           if (data.downloadUrl?.startsWith("http")) {
+                  const response = await fetch(data.downloadUrl);
+                  if (!response.ok) throw new Error("Failed to fetch video");
+                  const blob = await response.blob();
+                  const objectUrl = URL.createObjectURL(blob);
+                  items.push({
+                    name: "Download Video",
+                    url: objectUrl,
+                    blob: blob
+                  });
+                }  
           
-            if (data.audioUrl?.startsWith("http")) {
+           if (data.audioUrl?.startsWith("http")) {
+              const response = await fetch(data.audioUrl);
+              if (!response.ok) throw new Error("Failed to fetch audio");
+              const blob = await response.blob();
+              const objectUrl = URL.createObjectURL(blob);
               items.push({
                 name: "Download Audio",
-                url: data.audioUrl,
-                blob: new Blob()
+                url: objectUrl,
+                blob: blob
               });
             }
           
