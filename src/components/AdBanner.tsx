@@ -80,16 +80,17 @@ const AdBanner = ({ className, adKey, width, height }: AdBannerProps) => {
 }, [adKey, width, height]);
   
   return (
-    <div
-      className={cn(
-        "flex justify-center my-4 overflow-hidden",
-        className
-      )}
-      style={{ minHeight: height }}
-    >
-      <div ref={adRef}></div>
-    </div>
-  );
+  <div
+    className={cn(
+      "flex justify-center my-4 overflow-hidden",
+      className
+    )}
+    style={{ minHeight: SHOW_ADS ? height : 0 }} // 👈 small improvement
+  >
+    <div ref={adRef}></div>
+  </div>
+);
+if (!SHOW_ADS) return null;
 };
 
 export default AdBanner;
