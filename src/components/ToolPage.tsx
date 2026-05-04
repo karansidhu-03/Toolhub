@@ -441,7 +441,7 @@ const ToolPage = ({ tool }: ToolPageProps) => {
         </div>
       </section>
 
-      <AdBanner className="container mx-auto px-4 rounded-lg" />
+ 
 
       <section className="container mx-auto px-4 py-16 text-center">
         <h2 className="font-display text-2xl font-bold mb-10">How It Works</h2>
