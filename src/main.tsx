@@ -2,7 +2,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 
-import { loadAds } from "./utils/adLoader";
+import { loadAds } from "./lib/adLoader";
 
 loadAds();
 
