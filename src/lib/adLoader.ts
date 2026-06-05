@@ -4,6 +4,7 @@ const PRODUCTION_DOMAINS = [
 ];
 
 export const isProductionDomain = () => {
+   if (typeof window === "undefined") return false;
   return PRODUCTION_DOMAINS.includes(window.location.hostname);
 };
 
