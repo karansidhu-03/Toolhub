@@ -13,39 +13,34 @@ height: number;
 const AdBanner = ({ className, adKey, width, height }: AdBannerProps) => {
 const adRef = useRef<HTMLDivElement>(null);
 
-useEffect(() => {
-if (!SHOW_ADS) return;
-if (!adRef.current) return;
-
-```
 // clear previous ad to avoid duplicates in React re-renders
 adRef.current.innerHTML = "";
 
-try {
-  const scriptConfig = document.createElement("script");
-  scriptConfig.type = "text/javascript";
-  scriptConfig.innerHTML = `
-    atOptions = {
-      key: "${adKey}",
+useEffect(() => {
+  if (!SHOW_ADS) return;
+  if (!adRef.current) return;
+
+  adRef.current.innerHTML = "";
+
+  try {
+    // safer: define object in JS first
+    (window as any).atOptions = {
+      key: adKey,
       format: "iframe",
-      height: ${height},
-      width: ${width},
+      height,
+      width,
       params: {}
     };
-  `;
 
-  const scriptInvoke = document.createElement("script");
-  scriptInvoke.type = "text/javascript";
-  scriptInvoke.src = `https://fortunateambiguous.com/${adKey}/invoke.js`;
-  scriptInvoke.async = true;
+    const scriptInvoke = document.createElement("script");
+    scriptInvoke.type = "text/javascript";
+    scriptInvoke.src = `https://fortunateambiguous.com/${adKey}/invoke.js`;
+    scriptInvoke.async = true;
 
-  adRef.current.appendChild(scriptConfig);
-  adRef.current.appendChild(scriptInvoke);
-} catch (err) {
-  console.error("Ad error:", err);
-}
-```
-
+    adRef.current.appendChild(scriptInvoke);
+  } catch (err) {
+    console.error("Ad error:", err);
+  }
 }, [adKey, width, height]);
 
 if (!SHOW_ADS) return null;
