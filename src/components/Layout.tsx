@@ -5,7 +5,7 @@ import { Menu, X, ChevronDown, Search, Download } from "lucide-react";
 import { categories, getToolsByCategory, type ToolCategory } from "@/lib/tools";
 import { Input } from "@/components/ui/input";
 import { tools } from "@/lib/tools";
-import AdBanner from "./AdBanner";
+import { isProdAdsEnabled } from "@/lib/adLoader";
 
 const navGroups: { key: ToolCategory; label: string }[] = [
   { key: "downloader", label: "Downloaders" },
@@ -47,7 +47,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <AdBanner className="w-full" />
 
       <header className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur-xl">
         <div className="container mx-auto flex items-center justify-between px-4 py-3">
@@ -263,9 +262,11 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       </footer>
 
       {/* Sticky Footer Ad */}
-      <div className="sticky bottom-0 z-40 bg-card/90 backdrop-blur border-t border-border">
-        <AdBanner className="my-0 min-h-[50px]" />
-      </div>
+      {isProdAdsEnabled() && (
+        <div className="sticky bottom-0 z-40 bg-card/90 backdrop-blur border-t border-border">
+         <AdBanner className="my-0 min-h-[50px]" />
+        </div>
+      )}
     </div>
   );
 };
